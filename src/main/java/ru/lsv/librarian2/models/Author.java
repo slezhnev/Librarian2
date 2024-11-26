@@ -2,18 +2,27 @@ package ru.lsv.librarian2.models;
 
 import java.util.List;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.persistence.Cacheable;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 
 @Entity
-public class Author extends PanacheEntity {
+@Cacheable
+public class Author extends PanacheEntityBase {
 
 	/**
 	 * Unique key
 	 */
-	@Id @GeneratedValue
+	@Id
+	@GeneratedValue
+	@Column(name = "author_id")
 	public Integer authorId;
 	/**
 	 * Author first name
@@ -30,11 +39,19 @@ public class Author extends PanacheEntity {
 	/**
 	 * Author books
 	 */
+	@OneToMany
+	@JoinTable(name = "book_authors", joinColumns = @JoinColumn(name = "author_id"), inverseJoinColumns = @JoinColumn(name = "book_id"))
 	public List<Book> books;
 	/**
 	 * Library
 	 */
+	@ManyToOne
+	@JoinColumn(name = "library_id")
 	public Library library;
-	
-	
+
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName() + "<" + authorId + ">";
+	}
+
 }

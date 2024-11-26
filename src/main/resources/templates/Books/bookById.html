@@ -1,0 +1,10 @@
+<html>
+<title>Book by id</title>
+<body>
+Book: {#include Books/book.html /} <p/>
+Authors:
+{#for author in book.authors} 
+{#include Authors/author.html /} (id : {author.authorId})<br/>
+{/for}
+</body>
+</html>
