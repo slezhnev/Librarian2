@@ -1,12 +1,18 @@
 package ru.lsv.librarian2.models;
 
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.jboss.logging.Logger;
+
+import io.quarkiverse.renarde.util.StringUtils;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.logging.Log;
 import io.quarkus.panache.common.Sort;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import jakarta.inject.Inject;
 import jakarta.persistence.Cacheable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -117,9 +123,12 @@ public class Book extends PanacheEntityBase {
 		return list("serieName", Sort.by("numInSerie"), serie);
 	}
 
-	@RegisterForReflection
-	public static class Serie {
-		public String serieName;
+	private static String updateSearch(String search) {
+		if (search == null || search.isBlank()) {
+			return "%";
+		} else {
+			return search + "%";
+		}
 	}
 
 	/**
@@ -129,8 +138,48 @@ public class Book extends PanacheEntityBase {
 	 * @return List of series
 	 */
 	public static List<String> searchBySerie(String serieSearch) {
-		return find("select distinct serieName from Book where serieName like ?1 order by serieName", serieSearch)
-				.project(String.class).list();
+		return find("select distinct serieName from Book where serieName like ?1 order by serieName",
+				updateSearch(serieSearch)).project(String.class).list();
+	}
+
+	public static List<String> searchForReadedSeries(String serieSearch, Integer userId) {
+		return find(
+				"select distinct b.serieName from Book b join b.readed r where b.serieName like ?1 and r.userId = ?2 order by b.serieName",
+				updateSearch(serieSearch), userId).project(String.class).list();
+	}
+
+	@RegisterForReflection
+	private static class ReadedSeries {
+		public String serieName;
+		@SuppressWarnings("unused")
+		public Integer user_id;
+		@SuppressWarnings("unused")
+		public Long totalInSerie;
+
+		@SuppressWarnings("unused")
+		public ReadedSeries(String serieName, Integer user_id, Long totalInSerie) {
+			this.serieName = serieName;
+			this.user_id = user_id;
+			this.totalInSerie = totalInSerie;
+		}
+
+	}
+
+	public static List<String> searchSeriesWithNewBooks(String serieSearch, Integer userId) {
+		ReadedSeries prev = null;
+		List<String> seriesWithNew = new ArrayList<>();
+		List<ReadedSeries> series = find(
+				"select b.serieName, u.userId, count(b.bookId) as totalInSerie from Book b " + "left join b.readed u "
+						+ "where b.serieName like ?1 and (u.userId = ?2 or u.userId is null) "
+						+ "group by b.serieName, u.userId order by b.serieName, u.userId",
+				updateSearch(serieSearch), userId).project(ReadedSeries.class).list();
+		for (ReadedSeries rs : series) {
+			if (prev != null && prev.serieName != null && prev.serieName.equals(rs.serieName)) {
+				seriesWithNew.add(rs.serieName);
+			}
+			prev = rs;
+		}
+		return seriesWithNew;
 	}
 
 	@Override

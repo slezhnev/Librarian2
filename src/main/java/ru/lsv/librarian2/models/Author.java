@@ -3,6 +3,7 @@ package ru.lsv.librarian2.models;
 import java.util.List;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.panache.common.Sort;
 import jakarta.persistence.Cacheable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -52,6 +53,18 @@ public class Author extends PanacheEntityBase {
 	@Override
 	public String toString() {
 		return this.getClass().getSimpleName() + "<" + authorId + ">";
+	}
+
+	public static String updateSearch(String searchString) {
+		if (searchString == null || searchString.isBlank()) {
+			return "%";
+		} else {
+			return searchString + "%";
+		}
+	}
+
+	public static List<Author> search(String lastNameSearch) {
+		return list("from Author where lastName like ?1", Sort.by("lastName"), updateSearch(lastNameSearch));
 	}
 
 }
