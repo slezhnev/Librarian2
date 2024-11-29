@@ -1,8 +1,8 @@
 <html>
 <title>Author by id (Librarian2) v2</title>
 <body>
-Author: {#include Authors/author.html /} <p/>
+Author: {author.lastName} {author.firstName} {author.middleName} <p/>
 Books: <br/>
-{#let books = author.books} {#include Books/books.html /}
+{#let books = author.books} {#include Books/booksList.html /}
 </body>
 </html>

@@ -1,8 +1,13 @@
 package ru.lsv.librarian2.models;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import org.jboss.resteasy.reactive.RestPath;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.logging.Log;
 import io.quarkus.panache.common.Sort;
 import jakarta.persistence.Cacheable;
 import jakarta.persistence.Column;
@@ -13,6 +18,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.transaction.Transactional;
+import ru.lsv.librarian2.util.AccessUtils;
 
 @Entity
 @Cacheable
@@ -55,16 +62,54 @@ public class Author extends PanacheEntityBase {
 		return this.getClass().getSimpleName() + "<" + authorId + ">";
 	}
 
-	public static String updateSearch(String searchString) {
-		if (searchString == null || searchString.isBlank()) {
-			return "%";
+	@Transactional
+	public static Optional<Author> addIfNotExists(Author author, Library library) {
+		Optional<Author> existedAuthor = find(
+				"from Author where firstName = ?1 and middleName = ?2 and lastName = ?3 and library.library_id=?4",
+				author.firstName, author.middleName, author.lastName, library.libraryId).singleResultOptional();
+		if (existedAuthor.isPresent()) {
+			return existedAuthor;
 		} else {
-			return searchString + "%";
+			author.library = library;
+			author.persist();
+			return Optional.of(author);
 		}
 	}
 
-	public static List<Author> search(String lastNameSearch) {
-		return list("from Author where lastName like ?1", Sort.by("lastName"), updateSearch(lastNameSearch));
+	public static List<Author> search(String lastNameSearch, Integer libraryId) {
+		return list("from Author where lastName like ?1 and library.library_id=?2", Sort.by("lastName"),
+				AccessUtils.updateSearch(lastNameSearch), libraryId);
+	}
+
+	@SuppressWarnings("unused")
+	private static class SearchAuthor {
+		private Integer authorId;
+		private Integer userId;
+		private Long totalInSerie;
+
+		public SearchAuthor(Integer authorId, Integer userId, Long totalInSerie) {
+			super();
+			this.authorId = authorId;
+			this.userId = userId;
+			this.totalInSerie = totalInSerie;
+		}
+	}
+
+	public static List<Author> searchWithNewBooks(@RestPath Integer userId, String lastNameSearch) {
+		List<SearchAuthor> authorIds = find(
+				"select a.authorId, u.userId, count(b.bookId) as totalInSerie from Author a left join a.books b left join b.readed u "
+						+ "where b.serieName like ?1 and (u.userId = ?2 or u.userId is null) "
+						+ "group by a.authorId, u.userId order by a.authorId, u.userId",
+				AccessUtils.updateSearch(lastNameSearch), userId).project(SearchAuthor.class).list();
+		SearchAuthor prev = null;
+		List<Integer> foundAuthors = new ArrayList<>();
+		for (SearchAuthor curr : authorIds) {
+			if (prev != null && curr != null && prev.authorId != null && prev.authorId.equals(curr.authorId)) {
+				foundAuthors.add(curr.authorId);
+			}
+			prev = curr;
+		}
+		return list("from Author where authorId in ?1", foundAuthors);
 	}
 
 }

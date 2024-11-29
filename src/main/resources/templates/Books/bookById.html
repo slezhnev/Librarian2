@@ -1,10 +1,10 @@
 <html>
 <title>Book by id</title>
 <body>
-Book: {#include Books/book.html /} <p/>
+Book: {book.title} {#if !book.serieName.isBlank()}({book.serieName} - {book.numInSerie}){/if} <p/>
 Authors:
 {#for author in book.authors} 
-{#include Authors/author.html /} (id : {author.authorId})<br/>
+{#include Authors/authorWithLink.html /}<br/>
 {/for}
 </body>
 </html>

@@ -22,6 +22,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import ru.lsv.librarian2.util.AccessUtils;
 
 @Entity
 @Cacheable
@@ -123,14 +124,6 @@ public class Book extends PanacheEntityBase {
 		return list("serieName", Sort.by("numInSerie"), serie);
 	}
 
-	private static String updateSearch(String search) {
-		if (search == null || search.isBlank()) {
-			return "%";
-		} else {
-			return search + "%";
-		}
-	}
-
 	/**
 	 * Get series by partial name (LIKE syntax)
 	 * 
@@ -139,13 +132,20 @@ public class Book extends PanacheEntityBase {
 	 */
 	public static List<String> searchBySerie(String serieSearch) {
 		return find("select distinct serieName from Book where serieName like ?1 order by serieName",
-				updateSearch(serieSearch)).project(String.class).list();
+				AccessUtils.updateSearch(serieSearch)).project(String.class).list();
 	}
 
+	/**
+	 * Get read series by partial name (LIKE syntax)
+	 * 
+	 * @param serieSearch Search criteria in LIKE format
+	 * @param userId      userId which read the serie
+	 * @return set of series
+	 */
 	public static List<String> searchForReadedSeries(String serieSearch, Integer userId) {
 		return find(
 				"select distinct b.serieName from Book b join b.readed r where b.serieName like ?1 and r.userId = ?2 order by b.serieName",
-				updateSearch(serieSearch), userId).project(String.class).list();
+				AccessUtils.updateSearch(serieSearch), userId).project(String.class).list();
 	}
 
 	@RegisterForReflection
@@ -165,6 +165,13 @@ public class Book extends PanacheEntityBase {
 
 	}
 
+	/**
+	 * Find serie which has new books
+	 * 
+	 * @param serieSearch Search criteria in LIKE format
+	 * @param userId      userId which read the serie
+	 * @return Set of series which has new books
+	 */
 	public static List<String> searchSeriesWithNewBooks(String serieSearch, Integer userId) {
 		ReadedSeries prev = null;
 		List<String> seriesWithNew = new ArrayList<>();
@@ -172,7 +179,7 @@ public class Book extends PanacheEntityBase {
 				"select b.serieName, u.userId, count(b.bookId) as totalInSerie from Book b " + "left join b.readed u "
 						+ "where b.serieName like ?1 and (u.userId = ?2 or u.userId is null) "
 						+ "group by b.serieName, u.userId order by b.serieName, u.userId",
-				updateSearch(serieSearch), userId).project(ReadedSeries.class).list();
+				AccessUtils.updateSearch(serieSearch), userId).project(ReadedSeries.class).list();
 		for (ReadedSeries rs : series) {
 			if (prev != null && prev.serieName != null && prev.serieName.equals(rs.serieName)) {
 				seriesWithNew.add(rs.serieName);
@@ -185,6 +192,7 @@ public class Book extends PanacheEntityBase {
 	@Override
 	public String toString() {
 		return this.getClass().getSimpleName() + "<" + bookId + ">";
+		
 	}
 
 }
