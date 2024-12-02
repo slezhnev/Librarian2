@@ -10,6 +10,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 @Cacheable
@@ -33,6 +34,7 @@ public class FileEntity extends PanacheEntityBase {
 	/**
 	 * Belongs to which library
 	 */
+	@ManyToOne
 	public Library library;
 
 	public static Stream<FileEntity> getEntitiesAsStream(Integer libId) {

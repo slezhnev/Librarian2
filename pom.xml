@@ -36,9 +36,9 @@
             <version>3.0.18</version>
         </dependency>
         <dependency>
-            <groupId>io.quarkiverse.web-bundler</groupId>
-            <artifactId>quarkus-web-bundler</artifactId>
-            <version>1.7.3</version>
+    		<groupId>io.quarkiverse.quinoa</groupId>
+    		<artifactId>quarkus-quinoa</artifactId>
+    		<version>2.5.0</version>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -58,9 +58,14 @@
         	<artifactId>quarkus-jdbc-postgresql</artifactId>
         </dependency>
         <dependency>
+        	<groupId>io.quarkus</groupId>
+        	<artifactId>quarkus-jdbc-h2</artifactId>
+        </dependency>
+        <dependency>
         	<groupId>commons-io</groupId>
         	<artifactId>commons-io</artifactId>
         </dependency>
+		     
     </dependencies>
 
     <build>
