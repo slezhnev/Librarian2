@@ -4,18 +4,7 @@ import {Book, Author} from "./models"
 
 @Component({
 	selector: 'bookinfo',
-	template: '
-	@for(author of book.authors; track author.authorId) {
-	    <author author={{ author }}/><br/>
-	}
-	<br/>
-	{{ book.title }} 
-	@if (book.serieName.trim().length != 0) {
-		({{book.serieName}} - {{book.numInSerie}})
-	} 
-	<br/>
-	<button (click)="downloadBook()">Download book</button>
-	'
+	templateUrl: './bookinfo.component.html',
 })
 
 export class BookInfo implements OnInit {
