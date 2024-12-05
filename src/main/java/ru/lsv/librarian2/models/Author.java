@@ -7,7 +7,6 @@ import java.util.Optional;
 import org.jboss.resteasy.reactive.RestPath;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.logging.Log;
 import io.quarkus.panache.common.Sort;
 import jakarta.persistence.Cacheable;
 import jakarta.persistence.Column;
@@ -83,9 +82,9 @@ public class Author extends PanacheEntityBase {
 
 	@SuppressWarnings("unused")
 	private static class SearchAuthor {
-		private Integer authorId;
-		private Integer userId;
-		private Long totalInSerie;
+		private final Integer authorId;
+		private final Integer userId;
+		private final Long totalInSerie;
 
 		public SearchAuthor(Integer authorId, Integer userId, Long totalInSerie) {
 			super();

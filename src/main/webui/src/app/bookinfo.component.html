@@ -1,5 +1,6 @@
+@if (book) {
 @for(author of book.authors; track author.authorId) {
-	    <author author={{ author }}/><br/>
+	<authorlink [author]=author/><br/>
 }
 <br/>
 {{ book.title }} 
@@ -7,3 +8,6 @@
 	({{ book.serieName }} - {{ book.numInSerie }})
 } <br/>
 <button (click)="downloadBook()">Download book</button>
+} @else {
+Book still not set
+}

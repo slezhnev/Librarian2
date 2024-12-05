@@ -46,3 +46,9 @@ nb-configuration.xml
 
 # Web Bundler
 node_modules/
+.dockerignore
+.mvn/wrapper/.gitignore
+.mvn/wrapper/maven-wrapper.properties
+.mvn/wrapper/MavenWrapperDownloader.java
+src/main/webui/.gitignore
+src/main/webui/.editorconfig

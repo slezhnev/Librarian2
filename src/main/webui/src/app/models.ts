@@ -1,4 +1,5 @@
 export class Book {
+	bookId: number;
 	authors: Author[];
 	title: string;
 	genre: string;
@@ -13,7 +14,8 @@ export class Book {
 	libraryName: string;
 	libraryId: number;
 
-	constructor(authors: Author[],
+	constructor(bookId: number,
+		authors: Author[],
 		title: string,
 		genre: string,
 		language: string,
@@ -26,6 +28,7 @@ export class Book {
 		deletedInLibrary: boolean,
 		libraryName: string,
 		libraryId: number) {
+		this.bookId = bookId;
 		this.authors = authors;
 		this.title = title;
 		this.genre = genre;
@@ -40,7 +43,6 @@ export class Book {
 		this.libraryName = libraryName;
 		this.libraryId = libraryId;
 	}
-)
 }
 
 export class Author {

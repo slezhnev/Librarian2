@@ -1,13 +1,15 @@
 import { Injectable } from '@angular/core';
 
-@Injectable()
+@Injectable({
+	providedIn: 'root',
+})
 export class DownloadService {
 	
 	constructor() {	
 		
 	}
 	
-	downloadBook(bookId: long, libraryId : long) {
+	downloadBook(bookId: number, libraryId : number) {
 		
 	}
 	

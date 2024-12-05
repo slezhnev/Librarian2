@@ -5,12 +5,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-
+import ru.lsv.librarian2.library.parsers.FileParserListener;
 import ru.lsv.librarian2.models.Book;
 import ru.lsv.librarian2.models.Library;
-import ru.lsv.librarian2.library.parsers.FileParserListener;
 
 /**
  * Шедулер обработки новых книг в библиотеках
@@ -30,12 +27,8 @@ public class LibrarySheduler {
 	public static synchronized ScheduledExecutorService getScheduler() {
 		if (scheduler == null) {
 			scheduler = Executors.newSingleThreadScheduledExecutor();
-			scheduler.scheduleWithFixedDelay(new Runnable() {
-				@Override
-				public void run() {
-					service();
-				}
-
+			scheduler.scheduleWithFixedDelay(() -> {
+				service();
 			}, 0, 1, TimeUnit.DAYS);
 		}
 		return scheduler;
@@ -92,7 +85,6 @@ public class LibrarySheduler {
 	/**
 	 * Поиск новых книг в библиотеках
 	 */
-	@SuppressWarnings("unchecked")
 	public static void service() {
 		// Получаем ВСЕ библиотеки
 		List<Library> libraries = Library.listAll();
@@ -102,15 +94,14 @@ public class LibrarySheduler {
 				// Смотрим тип библиотеки - ищем реализацию
 				LibraryRealization libRes = null;
 				switch (library.libraryKind) {
-				case 1: {
-					// Либрусек
-					libRes = new LibRusEcLibrary();
-					break;
-				}
-				case 2: {
-					break;
-				}
-				default:
+					case 1 -> {
+						// Либрусек
+						libRes = new LibRusEcLibrary();
+					}
+					case 2 -> {
+					}
+					default -> {
+					}
 				}
 				if (libRes != null) {
 					// Что-то начинаем делать...

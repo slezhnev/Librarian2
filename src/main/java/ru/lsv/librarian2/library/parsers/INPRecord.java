@@ -37,28 +37,25 @@ public class INPRecord {
         }
         // Выделяем авторов
         String[] tmpAuthors = parts[0].split(":");
-        authors = new ArrayList<INPAuthor>();
+        authors = new ArrayList<>();
         for (String auth : tmpAuthors) {
             String[] fio = auth.split(",");
             switch (fio.length) {
-                case 0: {
+                case 0 ->  {
                     // Что-то странное - ничего делать не будем
-                    break;
+
                 }
-                case 1: {
+                case 1 ->  {
                     // Есть только фамилия
                     authors.add(new INPAuthor(fio[0], "", ""));
-                    break;
                 }
-                case 2: {
+                case 2 ->  {
                     // Есть только фамилия + имя
                     authors.add(new INPAuthor(fio[0], fio[1], ""));
-                    break;
                 }
-                case 3: {
+                case 3 ->  {
                     // Есть все
                     authors.add(new INPAuthor(fio[0], fio[1], fio[2]));
-                    break;
                 }
             }
         }
@@ -149,7 +146,7 @@ public class INPRecord {
 
     @Override
     public String toString() {
-        StringBuffer res = new StringBuffer("");
+        StringBuilder res = new StringBuilder("");
         for (INPAuthor author : authors) {
             res.append(author.getFamily()).append(",").append(author.getName()).append(",").append(author.getLastName()).append(":");
         }
@@ -169,15 +166,15 @@ public class INPRecord {
         /**
          * Фамилия
          */
-        private String family;
+        private final String family;
         /**
          * Имя
          */
-        private String name;
+        private final String name;
         /**
          * Отчество
          */
-        private String lastName;
+        private final String lastName;
 
         /**
          * Конструктор
@@ -231,13 +228,13 @@ public class INPRecord {
         book.serieName = getSerie();
         Integer numInSerie;
         try {
-            numInSerie = Integer.parseInt(getSeriesNum());
+            numInSerie = Integer.valueOf(getSeriesNum());
         } catch (NumberFormatException e) {
             numInSerie = null;
         }
         book.numInSerie = numInSerie;
         // Поехали по авторам
-        List<Author> authors = new ArrayList<Author>();
+        List<Author> tempAuthors = new ArrayList<>();
         //book.getAuthors().clear();
         for (INPAuthor inpAuthor : getAuthors()) {
             Author author = new Author();
@@ -250,10 +247,10 @@ public class INPRecord {
             // Ищем такое в БД
             Optional<Author> addedAuthor = Author.addIfNotExists(author, LibraryUtils.getCurrentLibrary());
             if (addedAuthor.isPresent()) {
-                authors.add(addedAuthor.get());
+                tempAuthors.add(addedAuthor.get());
             }
         }
-        book.authors = authors;
+        book.authors = tempAuthors;
         book.deletedInLibrary = isDeleted();
         return book;
     }
@@ -261,7 +258,6 @@ public class INPRecord {
     /**
      * Exception в случае хренового формата записи
      */
-    @SuppressWarnings("serial")
 	public static class BadINPRecord extends Exception {
 
         /**

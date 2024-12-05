@@ -5,14 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.jboss.logging.Logger;
-
-import io.quarkiverse.renarde.util.StringUtils;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.logging.Log;
 import io.quarkus.panache.common.Sort;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import jakarta.inject.Inject;
 import jakarta.persistence.Cacheable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
