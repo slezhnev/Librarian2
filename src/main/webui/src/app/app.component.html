@@ -1,29 +1,41 @@
-  <div id="w-node-_8312a9d4-fa85-34e8-05f2-7dc0c8574d56-dae3a695" class="w-layout-layout quick-stack wf-layout-layout">
-    <div id="w-node-_0c90887d-3af6-9d75-88d2-9341602e0dfc-dae3a695" class="w-layout-cell">
-      <div class="w-form">
-        <form id="email-form" name="email-form" data-name="Email Form" method="get" class="form-2" data-wf-page-id="674e1ed474f3cbe0dae3a695" data-wf-element-id="f84593b8-34d9-ba70-35e2-ba8893ab1b6b"><label class="radio-button-field w-radio"><input type="radio" name="searchType" id="Authors" data-name="searchType" class="w-form-formradioinput w-radio-input" value="Authors"><span class="w-form-label" for="Authors">Authors</span></label><label class="radio-button-field-2 w-radio"><input type="radio" name="searchType" id="Authors" data-name="searchType" class="w-form-formradioinput w-radio-input" value="Authors"><span class="w-form-label" for="Authors">Books</span></label><label class="w-radio"><input type="radio" name="searchType" id="Authors" data-name="searchType" class="w-form-formradioinput w-radio-input" value="Authors"><span class="w-form-label" for="Authors">Series</span></label></form>
-      </div>
-      <div class="w-layout-hflex flex-block-3">
-        <div class="w-form">
-          <form id="email-form-2" name="email-form-2" data-name="Email Form 2" method="get" class="form-3" data-wf-page-id="674e1ed474f3cbe0dae3a695" data-wf-element-id="9900fe7d-c37b-dd99-a60d-0d21d391a275"><input class="text-field w-input" maxlength="256" name="searchEdit" data-name="searchEdit" placeholder="Search field" type="text" id="searchEdit" required=""><input type="submit" data-wait="Please wait..." class="submit-button w-button" value="Search"></form>
-        </div>
-      </div>
-      <ul role="list" class="list w-list-unstyled">
-        <li>ListItem1</li>
-        <li>ListItem2</li>
-        <li>ListItem3</li>
-      </ul>
+<div id="w-node-_8312a9d4-fa85-34e8-05f2-7dc0c8574d56-dae3a695" class="w-layout-layout quick-stack wf-layout-layout">
+  <div id="w-node-_0c90887d-3af6-9d75-88d2-9341602e0dfc-dae3a695" class="w-layout-cell">
+    <div class="w-form">
+        <mat-radio-group class="searchtype-radio-group" [(ngModel)]="searchType">
+          <mat-radio-button value="Authors" class="searchtype-radiobutton">Authors</mat-radio-button>
+          <mat-radio-button value="Books" class="searchtype-radiobutton">Books</mat-radio-button>
+          <mat-radio-button value="Series" class="searchtype-radiobutton">Series</mat-radio-button>
+        </mat-radio-group>        
     </div>
-    <div id="w-node-f0d3bee8-7a2a-0c6f-9f1a-9b5a63c03de5-dae3a695" class="w-layout-cell">
-      <div class="w-form">
-        <form id="email-form-3" name="email-form-3" data-name="Email Form 3" method="get" data-wf-page-id="674e1ed474f3cbe0dae3a695" data-wf-element-id="f87b8560-1c91-e610-d9ff-2e427f94a5bd"><input type="submit" data-wait="Please wait..." class="w-button" value="New book status"></form>
+    <div class="w-layout-hflex flex-block-3">
+      <div class="searchform">
+        <form [formGroup]="searchForm" class="searchform" (ngSubmit)="handleSearch()">
+          <mat-form-field class="searchedit">
+            <mat-label>Author name, book title or series name</mat-label>
+            <input matInput formControlName="searchEdit"/>
+          </mat-form-field>
+          <button mat-flat-button class="searchbutton" type="submit" [disabled]="!searchForm.valid">Search</button>
+        </form>
       </div>
-      <div class="w-layout-grid grid">
-        <div id="w-node-d8cf812d-c453-303f-3882-30cb6446c2f1-dae3a695" class="text-block">Place for book tree</div>
-        <div id="w-node-_78f80376-3535-68b5-ebaf-8cc5c1098306-dae3a695" class="text-block">
-        	<bookinfo/> 
-        </div>
+    </div>
+    <ul role="list" class="list w-list-unstyled">
+      <li>ListItem1</li>
+      <li>ListItem2</li>
+      <li>ListItem3</li>
+    </ul>
+  </div>
+  <div id="w-node-f0d3bee8-7a2a-0c6f-9f1a-9b5a63c03de5-dae3a695" class="w-layout-cell">
+    <div class="w-form">
+      <form id="email-form-3" name="email-form-3" data-name="Email Form 3" method="get"
+        data-wf-page-id="674e1ed474f3cbe0dae3a695" data-wf-element-id="f87b8560-1c91-e610-d9ff-2e427f94a5bd"><input
+          type="submit" data-wait="Please wait..." class="w-button" value="New book status"></form>
+    </div>
+    <div class="w-layout-grid grid">
+      <div id="w-node-d8cf812d-c453-303f-3882-30cb6446c2f1-dae3a695" class="text-block">Place for book tree</div>
+      <div id="w-node-_78f80376-3535-68b5-ebaf-8cc5c1098306-dae3a695" class="text-block">
+        <bookinfo />
       </div>
     </div>
   </div>
-  <router-outlet />
+</div>
+<router-outlet />
