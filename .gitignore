@@ -52,3 +52,4 @@ node_modules/
 .mvn/wrapper/MavenWrapperDownloader.java
 src/main/webui/.gitignore
 src/main/webui/.editorconfig
+build_angular.cmd

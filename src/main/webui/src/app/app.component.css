@@ -459,6 +459,10 @@
   grid-template-columns: 4fr 1fr;
 }
 
+.fullsize {
+  width: 100%;
+}
+
 .searchedit {
   width: 100%;
   margin-right: 20px;
@@ -466,4 +470,16 @@
 
 .searchbutton {
   margin-left: 20px;
+}
+
+.processingstatus {
+  margin-bottom: 10px;
+}
+
+.bookstree {
+  width: 100%;
+}
+
+.background-highlight{
+  background: rgb(0, 0, 0, .12);
 }
