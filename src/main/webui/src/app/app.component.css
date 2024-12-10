@@ -38,7 +38,7 @@
 .w-layout-grid {
   grid-row-gap: 16px;
   grid-column-gap: 16px;
-  grid-template-rows: auto auto;
+  grid-template-rows: 50% 50%;
   grid-template-columns: 1fr 1fr;
   grid-auto-columns: 1fr;
   display: grid;
@@ -441,6 +441,16 @@
 }
 
 
+.search-grid {
+  grid-row-gap: 16px;
+  grid-column-gap: 16px;
+  grid-template-rows: auto auto 80%;
+  grid-template-columns: 1fr;
+  grid-auto-columns: 1fr;
+  display: grid;
+  flex: 1;
+  align-self: stretch;
+}
 
 .searchtype-radio-group {
   display: flex;
@@ -457,6 +467,30 @@
   width: 100%;
   display: grid;
   grid-template-columns: 4fr 1fr;
+}
+
+.searchresult-type {
+  margin-top: 7px;
+  margin-bottom: 2px;
+  margin-left: 10px;
+}
+
+.searchresult {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #ccc;
+}
+
+.searchresult-mat-action-list {
+  overflow: auto;
+  width: 100%;
+  max-height: 80vh;
+}
+
+.searchresult-values {
+  overflow: scroll;
+  width: 100%;
+  height: 90%;
 }
 
 .fullsize {
@@ -478,8 +512,31 @@
 
 .bookstree {
   width: 100%;
+  height: 100%;
+  background-color: transparent;
+  border: 1px solid #ccc;
 }
 
 .background-highlight{
   background: rgb(0, 0, 0, .12);
+}
+
+.treeitem:hover{
+  cursor: pointer;
+}
+
+.treewrapper {
+  width: 100%;
+  overflow: scroll;
+}
+
+.bookwrapper {
+  overflow: scroll;
+  width: 100%;
+  height: 100%;
+  border: 1px solid #ccc;
+}
+
+.bookinfo {
+  margin:  10px;  
 }

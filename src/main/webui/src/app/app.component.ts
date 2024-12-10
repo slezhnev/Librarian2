@@ -10,6 +10,7 @@ import { MatListModule, MatSelectionListChange } from '@angular/material/list';
 import { MatTreeModule, MatTreeNode } from '@angular/material/tree';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
+import { ProgressSpinner } from './progressspinner.component';
 
 interface SearchTreeNode {
   name: string;
@@ -37,18 +38,24 @@ export class AppComponent {
 
   handleSearch() {
     this.searchResultType = this.searchType;
-    this.searchResult = [this.searchForm.value.searchEdit + "-1", this.searchForm.value.searchEdit + "-2"]
+    this.searchResult = [];
+    for (var i = 0; i < 50; i++) {
+      this.searchResult[i] = this.searchForm.value.searchEdit + i;
+    }
   }
 
   searchResultType: string = this.searchType;
 
-  searchResultFormControl = new FormControl();
-  searchResultForm: FormGroup = new FormGroup({
-    searchResultSelected: this.searchResultFormControl,
-  })
+  progressSpinner: ProgressSpinner = new ProgressSpinner();
 
-  searchLIselected(event: MatSelectionListChange) {
-    alert("was selected " + this.searchResultFormControl.value)
+  searchResultSelectedElement: any;
+
+  searchResultSelected(sr: any) {
+    this.progressSpinner.openDialog();
+    this.searchResultSelectedElement = sr;
+    setTimeout(() => {
+      this.progressSpinner.closeDialog();
+    }, 5000);
   }
 
   processingStatus() {
@@ -79,6 +86,7 @@ export class AppComponent {
         },
       ],
     },
+    { name: 'Book itself' },
   ];
 
 

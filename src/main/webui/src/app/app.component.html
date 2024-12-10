@@ -1,6 +1,6 @@
 <div id="w-node-_8312a9d4-fa85-34e8-05f2-7dc0c8574d56-dae3a695" class="w-layout-layout quick-stack wf-layout-layout">
   <div id="w-node-_0c90887d-3af6-9d75-88d2-9341602e0dfc-dae3a695" class="w-layout-cell">
-    <div class="w-form">
+    <div>
         <mat-radio-group class="searchtype-radio-group" [(ngModel)]="searchType">
           <mat-radio-button value="Authors" class="searchtype-radiobutton">Authors</mat-radio-button>
           <mat-radio-button value="Books" class="searchtype-radiobutton">Books</mat-radio-button>
@@ -18,26 +18,27 @@
         </form>
       </div>
     </div>
-    <div>{{searchResultType}}</div>
-    <div class="fullsize">
-    <form [formGroup]="searchResultForm" class="fullsize">
-      <mat-selection-list [formControl]="searchResultFormControl" name="searchResult" [multiple]="false" class="fullsize" (selectionChange)="searchLIselected($event)">  
-        @for (sr of searchResult; track sr) {
-          <mat-list-option [value]="sr">{{sr}}</mat-list-option>
-        }  
-      </mat-selection-list>  
-    </form>
+    <div class="searchresult">
+      <div class="searchresult-type">{{searchResultType}}</div>
+      <div class="searchresult-values">
+        <mat-action-list name="searchResult" class="searchresult-mat-action-list">  
+          @for (sr of searchResult; track sr) {
+            <button mat-list-item [value]="sr" (click)="searchResultSelected(sr)"
+            [ngClass]="{ 'background-highlight': searchResultSelectedElement === sr }">{{sr}}</button>
+          }  
+        </mat-action-list>  
+      </div>
     </div>
   </div>
   <div id="w-node-f0d3bee8-7a2a-0c6f-9f1a-9b5a63c03de5-dae3a695" class="w-layout-cell">
     <button mat-flat-button (click)="processingStatus()" class="processingstatus">Books processing status</button>
     <div class="w-layout-grid grid">
-      <div id="w-node-d8cf812d-c453-303f-3882-30cb6446c2f1-dae3a695" class="text-block">
+      <div class="treewrapper">
         <mat-tree #tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor" class="bookstree">
           <!-- This is the tree node template for leaf nodes -->
           <mat-tree-node #matNode *matTreeNodeDef="let node" matTreeNodePadding
           (click)="activeNode = node" [ngClass]="{ 'background-highlight': activeNode === node }">
-            <button mat-icon-button></button> <span>{{node.item}}</span>
+            <button mat-icon-button></button> <span class="treeitem">{{node.name}}</span>
           </mat-tree-node> 
           <!-- This is the tree node template for expandable nodes -->
           <mat-tree-node *matTreeNodeDef="let node;when: hasChild" matTreeNodePadding matTreeNodeToggle
@@ -51,8 +52,8 @@
           </mat-tree-node>
         </mat-tree>        
       </div>
-      <div id="w-node-_78f80376-3535-68b5-ebaf-8cc5c1098306-dae3a695" class="text-block">
-        <bookinfo />
+      <div id="w-node-_78f80376-3535-68b5-ebaf-8cc5c1098306-dae3a695" class="bookwrapper">
+        <bookinfo class="bookinfo"/>
       </div>
     </div>
   </div>
