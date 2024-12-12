@@ -1,18 +1,19 @@
-<div id="w-node-_8312a9d4-fa85-34e8-05f2-7dc0c8574d56-dae3a695" class="w-layout-layout quick-stack wf-layout-layout">
-  <div id="w-node-_0c90887d-3af6-9d75-88d2-9341602e0dfc-dae3a695" class="w-layout-cell">
-    <div>
+<div class="quick-stack">
+  <div class="w-layout-cell">
+    <div class="searchtype">
         <mat-radio-group class="searchtype-radio-group" [(ngModel)]="searchType">
           <mat-radio-button value="Authors" class="searchtype-radiobutton">Authors</mat-radio-button>
           <mat-radio-button value="Books" class="searchtype-radiobutton">Books</mat-radio-button>
           <mat-radio-button value="Series" class="searchtype-radiobutton">Series</mat-radio-button>
-        </mat-radio-group>        
+        </mat-radio-group>
+        <mat-checkbox class="searchtype-onlyreaded" [(ngModel)]="searchOnlyWithNewBooks">Only with new books</mat-checkbox>
     </div>
     <div class="w-layout-hflex flex-block-3">
       <div class="searchform">
         <form [formGroup]="searchForm" class="searchform" (ngSubmit)="handleSearch()">
           <mat-form-field class="searchedit">
             <mat-label>Author name, book title or series name</mat-label>
-            <input matInput formControlName="searchEdit"/>
+            <input matInput formControlName="searchEdit" [(ngModel)]="searchText"/>
           </mat-form-field>
           <button mat-flat-button class="searchbutton" type="submit" [disabled]="!searchForm.valid">Search</button>
         </form>
@@ -37,7 +38,7 @@
         <mat-tree #tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor" class="bookstree">
           <!-- This is the tree node template for leaf nodes -->
           <mat-tree-node #matNode *matTreeNodeDef="let node" matTreeNodePadding
-          (click)="activeNode = node" [ngClass]="{ 'background-highlight': activeNode === node }">
+          (click)="treeLeafSelected(node)" [ngClass]="{ 'background-highlight': activeNode === node }">
             <button mat-icon-button></button> <span class="treeitem">{{node.name}}</span>
           </mat-tree-node> 
           <!-- This is the tree node template for expandable nodes -->

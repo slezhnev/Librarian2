@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { RouterOutlet } from '@angular/router';
 import { BookInfo } from './bookinfo.component';
@@ -6,11 +6,13 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
-import { MatListModule, MatSelectionListChange } from '@angular/material/list';
+import { MatListModule } from '@angular/material/list';
 import { MatTreeModule, MatTreeNode } from '@angular/material/tree';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { ProgressSpinner } from './progressspinner.component';
+import { HttpClient } from '@angular/common/http';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 interface SearchTreeNode {
   name: string;
@@ -19,8 +21,8 @@ interface SearchTreeNode {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, BookInfo, ReactiveFormsModule, MatRadioModule, FormsModule, MatInputModule, MatFormFieldModule, MatButtonModule, 
-    MatListModule, MatTreeModule, MatIconModule, MatTreeNode, CommonModule],
+  imports: [RouterOutlet, BookInfo, ReactiveFormsModule, MatRadioModule, FormsModule, MatInputModule, MatFormFieldModule, MatButtonModule,
+    MatListModule, MatTreeModule, MatIconModule, MatTreeNode, CommonModule, MatCheckboxModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -28,20 +30,39 @@ interface SearchTreeNode {
 export class AppComponent {
   title = 'librarian2';
 
-  searchType: string = "Authors";
+  readonly http: HttpClient = inject(HttpClient)
+
+  searchType: string = "Series";
+
+  searchText: string = "S-T-I-K-S"
+
+  searchOnlyWithNewBooks: boolean = true;
 
   searchForm: FormGroup = new FormGroup({
     searchEdit: new FormControl('', Validators.required)
   })
 
+  userId: number = 4;
+
   searchResult: string[] = [];
 
   handleSearch() {
     this.searchResultType = this.searchType;
-    this.searchResult = [];
-    for (var i = 0; i < 50; i++) {
-      this.searchResult[i] = this.searchForm.value.searchEdit + i;
+    if (this.searchResultType === 'Series') {
+      let request = '';
+      if (this.searchOnlyWithNewBooks) {
+        request = '/newinreadedseries/' + this.userId + '/'
+      }
+      this.http.get<string[]>(request, {
+        params: { serieName: this.searchText },
+      }).subscribe(series => {
+        this.searchResult = series;
+      })
     }
+    //this.searchResult = [];
+    //for (var i = 0; i < 50; i++) {
+    //  this.searchResult[i] = this.searchForm.value.searchEdit + i;
+    //}
   }
 
   searchResultType: string = this.searchType;
@@ -62,32 +83,35 @@ export class AppComponent {
     alert("Book processing status")
   }
 
-  activeNode : any;
+  activeNode: any;
 
   childrenAccessor = (node: SearchTreeNode) => node.children ?? [];
 
   hasChild = (_: number, node: SearchTreeNode) => !!node.children && node.children.length > 0;
 
-  dataSource : SearchTreeNode[] = [
+  dataSource: SearchTreeNode[] = [
     {
       name: 'Fruit',
-      children: [{name: 'Apple'}, {name: 'Banana'}, {name: 'Fruit loops'}],
+      children: [{ name: 'Apple' }, { name: 'Banana' }, { name: 'Fruit loops' }],
     },
     {
       name: 'Vegetables',
       children: [
         {
           name: 'Green',
-          children: [{name: 'Broccoli'}, {name: 'Brussels sprouts'}],
+          children: [{ name: 'Broccoli' }, { name: 'Brussels sprouts' }],
         },
         {
           name: 'Orange',
-          children: [{name: 'Pumpkins'}, {name: 'Carrots'}],
+          children: [{ name: 'Pumpkins' }, { name: 'Carrots' }],
         },
       ],
     },
     { name: 'Book itself' },
   ];
 
+  treeLeafSelected(node: any) {
+    this.activeNode = node;
+  }
 
 }

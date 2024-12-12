@@ -228,6 +228,13 @@
 .quick-stack {
   height: 100vh;
   display: grid;
+  grid-template-rows: auto;
+  grid-template-columns: 1fr 1fr;  
+  grid-row-gap: 20px;
+  grid-column-gap: 20px;
+  grid-auto-columns: 1fr;
+  justify-content: center;
+  padding: 20px;  
 }
 
 .body {
@@ -452,6 +459,12 @@
   align-self: stretch;
 }
 
+.searchtype {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
 .searchtype-radio-group {
   display: flex;
   flex-direction: row;
@@ -461,6 +474,10 @@
 
 .searchtype-radiobutton {
   margin: 5px;
+}
+
+.searchtype-onlyreaded {
+  margin: 20px 20px;
 }
 
 .searchform {
