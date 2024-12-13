@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Sort;
@@ -15,6 +16,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import ru.lsv.librarian2.util.AccessUtils;
@@ -38,7 +40,7 @@ public class Book extends PanacheEntityBase {
 	/**
 	 * Book authors list
 	 */
-	@OneToMany
+	@ManyToMany
 	@JoinTable(name = "book_authors", joinColumns = @JoinColumn(name = "book_id"), inverseJoinColumns = @JoinColumn(name = "author_id"))
 	public List<Author> authors;
 	/**
@@ -140,7 +142,8 @@ public class Book extends PanacheEntityBase {
 	public static List<String> searchForReadedSeries(String serieSearch, Integer userId) {
 		return find(
 				"select distinct b.serieName from Book b join b.readed r where b.serieName like ?1 and r.userId = ?2 order by b.serieName",
-				AccessUtils.updateSearch(serieSearch), userId).project(String.class).list();
+				AccessUtils.updateSearch(serieSearch), userId).project(String.class).stream()
+				.filter(el -> !el.isBlank()).collect(Collectors.toList());
 	}
 
 	@RegisterForReflection
@@ -176,10 +179,12 @@ public class Book extends PanacheEntityBase {
 						+ "group by b.serieName, u.userId order by b.serieName, u.userId",
 				AccessUtils.updateSearch(serieSearch), userId).project(ReadedSeries.class).list();
 		for (ReadedSeries rs : series) {
-			if (prev != null && prev.serieName != null && prev.serieName.equals(rs.serieName)) {
-				seriesWithNew.add(rs.serieName);
+			if (rs.serieName != null && !rs.serieName.isBlank()) {
+				if (prev != null && prev.serieName != null && prev.serieName.equals(rs.serieName)) {
+					seriesWithNew.add(rs.serieName);
+				}
+				prev = rs;
 			}
-			prev = rs;
 		}
 		return seriesWithNew;
 	}
@@ -187,7 +192,7 @@ public class Book extends PanacheEntityBase {
 	@Override
 	public String toString() {
 		return this.getClass().getSimpleName() + "<" + bookId + ">";
-		
+
 	}
 
 }

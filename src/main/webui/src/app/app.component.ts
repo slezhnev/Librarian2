@@ -13,16 +13,19 @@ import { CommonModule } from '@angular/common';
 import { ProgressSpinner } from './progressspinner.component';
 import { HttpClient } from '@angular/common/http';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { AsyncPipe } from '@angular/common';
+import { Observable } from 'rxjs';
 
 interface SearchTreeNode {
   name: string;
   children?: SearchTreeNode[];
+  bookId?: number;
 }
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, BookInfo, ReactiveFormsModule, MatRadioModule, FormsModule, MatInputModule, MatFormFieldModule, MatButtonModule,
-    MatListModule, MatTreeModule, MatIconModule, MatTreeNode, CommonModule, MatCheckboxModule],
+    MatListModule, MatTreeModule, MatIconModule, MatTreeNode, CommonModule, MatCheckboxModule, AsyncPipe],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -36,33 +39,36 @@ export class AppComponent {
 
   searchText: string = "S-T-I-K-S"
 
-  searchOnlyWithNewBooks: boolean = true;
+  searchTypeParam: string = "All";
 
   searchForm: FormGroup = new FormGroup({
-    searchEdit: new FormControl('', Validators.required)
+    searchEdit: new FormControl()
   })
 
-  userId: number = 4;
+  userId: number = 3;
 
-  searchResult: string[] = [];
+  searchResult$: Observable<string[]> | null = null;
 
   handleSearch() {
     this.searchResultType = this.searchType;
     if (this.searchResultType === 'Series') {
       let request = '';
-      if (this.searchOnlyWithNewBooks) {
+      if (this.searchTypeParam == 'NewBooks') {
         request = '/newinreadedseries/' + this.userId + '/'
-      }
-      this.http.get<string[]>(request, {
+      } else
+        if (this.searchTypeParam == 'Readed') {
+          request = '/readedseries/' + this.userId + '/'
+        } else {
+          request = '/series'
+        }
+      this.progressSpinner.openDialog();
+      this.searchResult$ = this.http.get<string[]>(request, {
         params: { serieName: this.searchText },
-      }).subscribe(series => {
-        this.searchResult = series;
+      })
+      this.searchResult$.subscribe(() => {
+        this.progressSpinner.closeDialog();
       })
     }
-    //this.searchResult = [];
-    //for (var i = 0; i < 50; i++) {
-    //  this.searchResult[i] = this.searchForm.value.searchEdit + i;
-    //}
   }
 
   searchResultType: string = this.searchType;

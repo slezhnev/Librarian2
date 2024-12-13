@@ -6,7 +6,11 @@
           <mat-radio-button value="Books" class="searchtype-radiobutton">Books</mat-radio-button>
           <mat-radio-button value="Series" class="searchtype-radiobutton">Series</mat-radio-button>
         </mat-radio-group>
-        <mat-checkbox class="searchtype-onlyreaded" [(ngModel)]="searchOnlyWithNewBooks">Only with new books</mat-checkbox>
+        <mat-radio-group class="searchtype-param" [(ngModel)]="searchTypeParam">
+          <mat-radio-button value="All" class="searchtype-radiobutton">all</mat-radio-button>
+          <mat-radio-button value="Readed" class="searchtype-radiobutton">readed</mat-radio-button>
+          <mat-radio-button value="NewBooks" class="searchtype-radiobutton">with new books</mat-radio-button>
+        </mat-radio-group>
     </div>
     <div class="w-layout-hflex flex-block-3">
       <div class="searchform">
@@ -22,11 +26,13 @@
     <div class="searchresult">
       <div class="searchresult-type">{{searchResultType}}</div>
       <div class="searchresult-values">
-        <mat-action-list name="searchResult" class="searchresult-mat-action-list">  
-          @for (sr of searchResult; track sr) {
-            <button mat-list-item [value]="sr" (click)="searchResultSelected(sr)"
-            [ngClass]="{ 'background-highlight': searchResultSelectedElement === sr }">{{sr}}</button>
-          }  
+        <mat-action-list name="searchResult" class="searchresult-mat-action-list"> 
+          @if (searchResult$ | async; as searchResult) {
+            @for (sr of searchResult; track sr) {
+              <button mat-list-item [value]="sr" (click)="searchResultSelected(sr)"
+              [ngClass]="{ 'background-highlight': searchResultSelectedElement === sr }">{{sr}}</button>
+            }  
+          }
         </mat-action-list>  
       </div>
     </div>

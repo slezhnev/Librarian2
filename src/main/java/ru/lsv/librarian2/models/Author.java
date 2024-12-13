@@ -15,8 +15,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.transaction.Transactional;
 import ru.lsv.librarian2.util.AccessUtils;
 
@@ -46,8 +46,7 @@ public class Author extends PanacheEntityBase {
 	/**
 	 * Author books
 	 */
-	@OneToMany
-	@JoinTable(name = "book_authors", joinColumns = @JoinColumn(name = "author_id"), inverseJoinColumns = @JoinColumn(name = "book_id"))
+	@ManyToMany(mappedBy="authors")
 	public List<Book> books;
 	/**
 	 * Library

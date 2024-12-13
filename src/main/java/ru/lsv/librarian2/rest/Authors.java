@@ -13,26 +13,26 @@ import ru.lsv.librarian2.models.Author;
 
 public class Authors extends Controller {
 
-	@CheckedTemplate
-	public static class Templates {
-		public static native TemplateInstance authorById(Author author);
+	// @CheckedTemplate
+	// public static class Templates {
+	// 	public static native TemplateInstance authorById(Author author);
 
-		public static native TemplateInstance authors(List<Author> authors);
-	}
+	// 	public static native TemplateInstance authors(List<Author> authors);
+	// }
 
-	@Path("/authors")
-	public TemplateInstance getById(@RestPath Integer id) {
-		return Templates.authorById(Author.findById(id));
-	}
+	// @Path("/authors")
+	// public TemplateInstance getById(@RestPath Integer id) {
+	// 	return Templates.authorById(Author.findById(id));
+	// }
 
-	@Path("/authors/byName")
-	public TemplateInstance getByLastName(@RestPath Integer libraryId, @RestQuery String lastName) {
-		return Templates.authors(Author.search(lastName, libraryId));
-	}
+	// @Path("/authors/byName")
+	// public TemplateInstance getByLastName(@RestPath Integer libraryId, @RestQuery String lastName) {
+	// 	return Templates.authors(Author.search(lastName, libraryId));
+	// }
 	
-	@Path("/authors/withNewBooks")
-	public TemplateInstance searchWithNewBooks(@RestPath Integer userId, @RestQuery String lastName) {
-		return Templates.authors(Author.searchWithNewBooks(userId, lastName));
-	}
+	// @Path("/authors/withNewBooks")
+	// public TemplateInstance searchWithNewBooks(@RestPath Integer userId, @RestQuery String lastName) {
+	// 	return Templates.authors(Author.searchWithNewBooks(userId, lastName));
+	// }
 	
 }
