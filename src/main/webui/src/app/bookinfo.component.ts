@@ -17,7 +17,7 @@ export class BookInfo {
 	book: Book|null = null;
 	
 	downloadBook() {
-		if (this.book) {
+		if (this.book && this.book.bookId && this.book.libraryId) {
 			this.ds.downloadBook(this.book.bookId, this.book.libraryId);
 		}	
 	}

@@ -534,8 +534,20 @@
   border: 1px solid #ccc;
 }
 
-.background-highlight{
+.treeitem-background-highlight{
   background: rgb(0, 0, 0, .12);
+}
+
+.treeitem-readed{
+  font-style: italic;
+}
+
+.treeitem-mustread{
+  font-weight: bold;
+}
+
+.treeitem-deleted{
+  color: red;
 }
 
 .treeitem:hover{

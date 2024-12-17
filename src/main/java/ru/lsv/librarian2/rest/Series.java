@@ -11,6 +11,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import ru.lsv.librarian2.models.Book;
+import ru.lsv.librarian2.models.TreeProcessor;
 
 public class Series extends Controller {
 
@@ -22,13 +23,21 @@ public class Series extends Controller {
 	}
 
 	@Path("/readedseries")
+	@Produces(MediaType.APPLICATION_JSON)
 	public List<String> getReadedSeries(@RestPath Integer userId, @RestQuery String serieName) {
 		return Book.searchForReadedSeries(serieName, userId);
 	}
 
 	@Path("/newinreadedseries")
+	@Produces(MediaType.APPLICATION_JSON)
 	public List<String> getSeriesWithNewBooks(@RestPath Integer userId, @RestQuery String serieName) {
 		return Book.searchSeriesWithNewBooks(serieName, userId);
+	}
+
+	@Path("/booksinserie")
+	@Produces(MediaType.APPLICATION_JSON)
+	public List<TreeProcessor.TreeNode> getTreeBySerie(@RestPath Integer userId, @RestQuery String serieName) {
+		return TreeProcessor.convertToTree(Book.listBySerie(serieName), userId);
 	}
 
 }

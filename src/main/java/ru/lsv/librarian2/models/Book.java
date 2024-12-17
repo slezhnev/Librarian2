@@ -112,6 +112,34 @@ public class Book extends PanacheEntityBase {
 	public Library library;
 
 	/**
+	 * Returns boolean isReaded, based on supplied userId
+	 * 
+	 * @param userId userId
+	 * @return is book was readed by supplied user
+	 */
+	public boolean isReaded(Integer userId) {
+		if (this.readed != null && !this.readed.isEmpty()) {
+			return this.readed.stream().map(el -> el.userId).anyMatch(el -> el.equals(userId));
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Returns boolean isMustRead, based on supplied userId
+	 * 
+	 * @param userId userId
+	 * @return is book should be read by supplied user
+	 */
+	public boolean isMustRead(Integer userId) {
+		if (this.mustRead != null && !this.mustRead.isEmpty()) {
+			return this.mustRead.stream().map(el -> el.userId).anyMatch(el -> el.equals(userId));
+		} else {
+			return false;
+		}
+	}
+
+	/**
 	 * Get all books by serie
 	 * 
 	 * @param serie Serie name
@@ -193,6 +221,14 @@ public class Book extends PanacheEntityBase {
 	public String toString() {
 		return this.getClass().getSimpleName() + "<" + bookId + ">";
 
+	}
+
+	public String titleWithSerie() {
+		if (serieName != null && !serieName.isBlank()) {
+			return String.format("%s - %d", this.title, this.numInSerie);
+		} else {
+			return this.title;
+		}
 	}
 
 }

@@ -26,10 +26,6 @@ public class Library extends PanacheEntityBase {
 	 */
 	public String storagePath;
 	/**
-	 * Library db name
-	 */
-	public String dbPath;
-	/**
 	 * Library type Supported types: 0 - simple library, no outer links 1 -
 	 * lib.rus.ec 2 - flibusta.net
 	 */

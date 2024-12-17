@@ -27,11 +27,9 @@
       <div class="searchresult-type">{{searchResultType}}</div>
       <div class="searchresult-values">
         <mat-action-list name="searchResult" class="searchresult-mat-action-list"> 
-          @if (searchResult$ | async; as searchResult) {
-            @for (sr of searchResult; track sr) {
+          @for (sr of searchResult; track sr) {
               <button mat-list-item [value]="sr" (click)="searchResultSelected(sr)"
               [ngClass]="{ 'background-highlight': searchResultSelectedElement === sr }">{{sr}}</button>
-            }  
           }
         </mat-action-list>  
       </div>
@@ -44,7 +42,8 @@
         <mat-tree #tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor" class="bookstree">
           <!-- This is the tree node template for leaf nodes -->
           <mat-tree-node #matNode *matTreeNodeDef="let node" matTreeNodePadding
-          (click)="treeLeafSelected(node)" [ngClass]="{ 'background-highlight': activeNode === node }">
+          (click)="treeLeafSelected(node)" [ngClass]="{ 'treeitem-background-highlight': activeNode === node, 'treeitem-deleted': node.deletedInLibrary, 
+            'treeitem-readed': node.readed, 'treeitem-mustread': node.mustRead }">
             <button mat-icon-button></button> <span class="treeitem">{{node.name}}</span>
           </mat-tree-node> 
           <!-- This is the tree node template for expandable nodes -->
@@ -60,7 +59,7 @@
         </mat-tree>        
       </div>
       <div id="w-node-_78f80376-3535-68b5-ebaf-8cc5c1098306-dae3a695" class="bookwrapper">
-        <bookinfo class="bookinfo"/>
+        <bookinfo [book]="bookInfo"/>
       </div>
     </div>
   </div>

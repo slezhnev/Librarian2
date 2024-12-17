@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { RouterOutlet } from '@angular/router';
 import { BookInfo } from './bookinfo.component';
 import { MatRadioModule } from '@angular/material/radio';
@@ -13,19 +13,22 @@ import { CommonModule } from '@angular/common';
 import { ProgressSpinner } from './progressspinner.component';
 import { HttpClient } from '@angular/common/http';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { AsyncPipe } from '@angular/common';
-import { Observable } from 'rxjs';
+import { catchError } from 'rxjs';
+import { Book } from "./models"
 
 interface SearchTreeNode {
   name: string;
   children?: SearchTreeNode[];
   bookId?: number;
+  readed?: boolean;
+  mustRead?: boolean;
+  deletedInLibrary?: boolean;
 }
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, BookInfo, ReactiveFormsModule, MatRadioModule, FormsModule, MatInputModule, MatFormFieldModule, MatButtonModule,
-    MatListModule, MatTreeModule, MatIconModule, MatTreeNode, CommonModule, MatCheckboxModule, AsyncPipe],
+    MatListModule, MatTreeModule, MatIconModule, MatTreeNode, CommonModule, MatCheckboxModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -47,7 +50,11 @@ export class AppComponent {
 
   userId: number = 3;
 
-  searchResult$: Observable<string[]> | null = null;
+  searchResult: string[] = [];
+
+  searchResultType: string = this.searchType;
+
+  progressSpinner: ProgressSpinner = new ProgressSpinner();
 
   handleSearch() {
     this.searchResultType = this.searchType;
@@ -62,27 +69,60 @@ export class AppComponent {
           request = '/series'
         }
       this.progressSpinner.openDialog();
-      this.searchResult$ = this.http.get<string[]>(request, {
+      this.http.get<string[]>(request, {
         params: { serieName: this.searchText },
-      })
-      this.searchResult$.subscribe(() => {
-        this.progressSpinner.closeDialog();
+      }).pipe(
+        catchError(error => {
+          console.error('Cannot get series for search "' + this.searchText + '" and userId:' + this.userId);
+          throw new Error('Cannot load series');
+        })
+      ).subscribe({
+        next: data => {
+          this.searchResult = data;
+          this.progressSpinner.closeDialog();
+        },
+        error: error => {
+          this.searchResult = [error.message]
+          this.progressSpinner.closeDialog();
+        }
       })
     }
   }
 
-  searchResultType: string = this.searchType;
-
-  progressSpinner: ProgressSpinner = new ProgressSpinner();
-
   searchResultSelectedElement: any;
 
   searchResultSelected(sr: any) {
-    this.progressSpinner.openDialog();
     this.searchResultSelectedElement = sr;
-    setTimeout(() => {
-      this.progressSpinner.closeDialog();
-    }, 5000);
+    this.progressSpinner.openDialog();
+    if (this.searchResultType === 'Series') {
+      let request = '';
+      if (this.searchTypeParam == 'NewBooks') {
+        request = '/newinreadedseries/' + this.userId + '/'
+      } else
+        if (this.searchTypeParam == 'Readed') {
+          request = '/readedseries/' + this.userId + '/'
+        } else {
+          request = '/series'
+        }
+      this.progressSpinner.openDialog();
+      this.http.get<SearchTreeNode[]>('/booksinserie/' + this.userId + '/', {
+        params: { serieName: this.searchResultSelectedElement },
+      }).pipe(
+        catchError(error => {
+          console.error('Cannot get books for serie "' + this.searchResultSelectedElement + '" and userId:' + this.userId);
+          throw new Error('Cannot load books for selected serie');
+        })
+      ).subscribe({
+        next: data => {
+          this.dataSource = data;
+          this.progressSpinner.closeDialog();
+        },
+        error: error => {
+          this.progressSpinner.closeDialog();
+          this.dataSource = [{ name: error.message, mustRead: true, deletedInLibrary: true }]
+        }
+      })
+    }
   }
 
   processingStatus() {
@@ -95,29 +135,31 @@ export class AppComponent {
 
   hasChild = (_: number, node: SearchTreeNode) => !!node.children && node.children.length > 0;
 
-  dataSource: SearchTreeNode[] = [
-    {
-      name: 'Fruit',
-      children: [{ name: 'Apple' }, { name: 'Banana' }, { name: 'Fruit loops' }],
-    },
-    {
-      name: 'Vegetables',
-      children: [
-        {
-          name: 'Green',
-          children: [{ name: 'Broccoli' }, { name: 'Brussels sprouts' }],
-        },
-        {
-          name: 'Orange',
-          children: [{ name: 'Pumpkins' }, { name: 'Carrots' }],
-        },
-      ],
-    },
-    { name: 'Book itself' },
-  ];
+  dataSource: SearchTreeNode[] = [];
 
-  treeLeafSelected(node: any) {
-    this.activeNode = node;
+  bookInfo: Book | null = null;
+
+  treeLeafSelected(node: SearchTreeNode) {
+    if (node.bookId) {
+      this.activeNode = node;
+      this.progressSpinner.openDialog();
+      this.http.get<Book>('/book/' + node.bookId + '/' + this.userId
+      ).pipe(
+        catchError(error => {
+          console.error('Cannot get book for bookId: ' + node.bookId + ' and userId:' + this.userId);
+          throw new Error('Cannot load selected book');
+        })
+      ).subscribe({
+        next: data => {
+          this.bookInfo = data;
+          this.progressSpinner.closeDialog();
+        },
+        error: error => {
+          this.progressSpinner.closeDialog();
+          //this.dataSource = [{ name: error.message, mustRead: true, deletedInLibrary: true }]
+        }
+      })
+    }
   }
 
 }

@@ -4,7 +4,7 @@
 }
 <br/>
 {{ book.title }} 
-@if (book.serieName.trim().length != 0) {
+@if (book.serieName && book.serieName.trim().length != 0) {
 	({{ book.serieName }} - {{ book.numInSerie }})
 } <br/>
 <button (click)="downloadBook()">Download book</button>
