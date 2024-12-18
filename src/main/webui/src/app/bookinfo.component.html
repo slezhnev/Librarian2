@@ -1,13 +1,20 @@
 @if (book) {
 @for(author of book.authors; track author.authorId) {
-	<authorlink [author]=author/><br/>
+		<authorlink [author]=author (switchToAuthorEvent)="switchToAuthor($event)"/><br/>
 }
 <br/>
+<mat-card-content>
 {{ book.title }} 
+</mat-card-content>
 @if (book.serieName && book.serieName.trim().length != 0) {
-	({{ book.serieName }} - {{ book.numInSerie }})
-} <br/>
-<button (click)="downloadBook()">Download book</button>
+	<div class="bookinfo-serie">
+		<button mat-button (click)="switchToSerie()" class="bookinfo-serie">({{ book.serieName }} - {{ book.numInSerie }})</button>
+	</div>
+} 
+<p></p>
+<div class="bookinfo-download">
+	<button mat-flat-button (click)="downloadBook()" class="bookinfo-download">Download book</button>
+</div>
 } @else {
 Book still not set
 }

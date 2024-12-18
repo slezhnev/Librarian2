@@ -1,5 +1,5 @@
 @if (author) {
-<a href=# (click)="switchToAuthor()">
+<button mat-button (click)="switchToAuthor()" class="authorlink">
 {{author.lastName}} {{author.firstName}} @if (author.middleName){{{author.middleName}}}
-</a>
+</button>
 }
