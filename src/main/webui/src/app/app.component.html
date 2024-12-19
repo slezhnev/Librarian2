@@ -59,7 +59,7 @@
         </mat-tree>        
       </div>
       <div id="w-node-_78f80376-3535-68b5-ebaf-8cc5c1098306-dae3a695" class="bookwrapper">
-        <bookinfo [book]="bookInfo"/>
+        <bookinfo [book]="bookInfo" (switchToAuthorEvent)="switchToAuthor($event)" (switchToSerieEvent)="switchToSerie($event)"/>
       </div>
     </div>
   </div>

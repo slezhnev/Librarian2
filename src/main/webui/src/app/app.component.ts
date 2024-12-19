@@ -14,7 +14,7 @@ import { ProgressSpinner } from './progressspinner.component';
 import { HttpClient } from '@angular/common/http';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { catchError } from 'rxjs';
-import { Book } from "./models"
+import { Book, Author } from "./models"
 
 interface SearchTreeNode {
   name: string;
@@ -95,15 +95,6 @@ export class AppComponent {
     this.searchResultSelectedElement = sr;
     this.progressSpinner.openDialog();
     if (this.searchResultType === 'Series') {
-      let request = '';
-      if (this.searchTypeParam == 'NewBooks') {
-        request = '/newinreadedseries/' + this.userId + '/'
-      } else
-        if (this.searchTypeParam == 'Readed') {
-          request = '/readedseries/' + this.userId + '/'
-        } else {
-          request = '/series'
-        }
       this.progressSpinner.openDialog();
       this.http.get<SearchTreeNode[]>('/booksinserie/' + this.userId + '/', {
         params: { serieName: this.searchResultSelectedElement },
@@ -160,6 +151,15 @@ export class AppComponent {
         }
       })
     }
+  }
+
+  switchToAuthor(author: Author) {
+
+  }
+
+  switchToSerie(serieName: string) {
+    this.searchResult = [serieName]
+    this.searchResultSelected(serieName)
   }
 
 }
