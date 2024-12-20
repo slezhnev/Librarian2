@@ -25,6 +25,16 @@ interface SearchTreeNode {
   deletedInLibrary?: boolean;
 }
 
+class SearchResult {
+  name: string;
+  id?: string;
+
+  constructor(name: string) {
+    this.name = name;
+  }
+
+}
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, BookInfo, ReactiveFormsModule, MatRadioModule, FormsModule, MatInputModule, MatFormFieldModule, MatButtonModule,
@@ -38,9 +48,9 @@ export class AppComponent {
 
   readonly http: HttpClient = inject(HttpClient)
 
-  searchType: string = "Series";
+  searchType: string = "Authors";
 
-  searchText: string = "S-T-I-K-S"
+  searchText: string = "Дивов"
 
   searchTypeParam: string = "All";
 
@@ -50,7 +60,7 @@ export class AppComponent {
 
   userId: number = 3;
 
-  searchResult: string[] = [];
+  searchResult: SearchResult[] = [];
 
   searchResultType: string = this.searchType;
 
@@ -61,10 +71,10 @@ export class AppComponent {
     if (this.searchResultType === 'Series') {
       let request = '';
       if (this.searchTypeParam == 'NewBooks') {
-        request = '/newinreadedseries/' + this.userId + '/'
+        request = '/series/newinreaded/' + this.userId + '/'
       } else
         if (this.searchTypeParam == 'Readed') {
-          request = '/readedseries/' + this.userId + '/'
+          request = '/series/readed' + this.userId + '/'
         } else {
           request = '/series'
         }
@@ -78,29 +88,57 @@ export class AppComponent {
         })
       ).subscribe({
         next: data => {
-          this.searchResult = data;
+          this.searchResult = data.map(el => <SearchResult>{ name: el })
           this.progressSpinner.closeDialog();
         },
         error: error => {
-          this.searchResult = [error.message]
+          this.searchResult = [<SearchResult>{ name: error.message }]
+          this.progressSpinner.closeDialog();
+        }
+      })
+    } else if (this.searchResultType === 'Authors') {
+      let request = '';
+      if (this.searchTypeParam == 'NewBooks') {
+        request = '/authors/withNewBook/' + this.userId + '/'
+      } else
+        if (this.searchTypeParam == 'Readed') {
+          request = '/authors/readed/' + this.userId + '/'
+        } else {
+          request = '/authors/byLastName'
+        }
+      this.progressSpinner.openDialog();
+      this.http.get<Author[]>(request, {
+        params: { lastName: this.searchText },
+      }).pipe(
+        catchError(error => {
+          console.error('Cannot get authors for search "' + this.searchText + '" and userId:' + this.userId);
+          throw new Error('Cannot load authors');
+        })
+      ).subscribe({
+        next: data => {
+          this.searchResult = data.map(el => <SearchResult>{ name: Author.fullName(el.firstName, el.middleName, el.lastName), id: el.authorId })
+          this.progressSpinner.closeDialog();
+        },
+        error: error => {
+          this.searchResult = [<SearchResult>{ name: error.message }]
           this.progressSpinner.closeDialog();
         }
       })
     }
   }
 
-  searchResultSelectedElement: any;
+  searchResultSelectedElement: SearchResult | null = null;
 
   searchResultSelected(sr: any) {
     this.searchResultSelectedElement = sr;
     this.progressSpinner.openDialog();
     if (this.searchResultType === 'Series') {
       this.progressSpinner.openDialog();
-      this.http.get<SearchTreeNode[]>('/booksinserie/' + this.userId + '/', {
-        params: { serieName: this.searchResultSelectedElement },
+      this.http.get<SearchTreeNode[]>('/series/books/' + this.userId + '/', {
+        params: { serieName: this.searchResultSelectedElement!.name },
       }).pipe(
         catchError(error => {
-          console.error('Cannot get books for serie "' + this.searchResultSelectedElement + '" and userId:' + this.userId);
+          console.error('Cannot get books for serie "' + this.searchResultSelectedElement!.name + '" and userId:' + this.userId);
           throw new Error('Cannot load books for selected serie');
         })
       ).subscribe({
@@ -113,7 +151,27 @@ export class AppComponent {
           this.dataSource = [{ name: error.message, mustRead: true, deletedInLibrary: true }]
         }
       })
-    }
+    } else
+      if (this.searchResultType === 'Authors') {
+        this.progressSpinner.openDialog();
+        this.http.get<SearchTreeNode[]>('/books/byAuthor/' + this.userId + '/', {
+          params: { authorId: "" + this.searchResultSelectedElement!.id },
+        }).pipe(
+          catchError(error => {
+            console.error('Cannot get books for author "' + this.searchResultSelectedElement!.name + '", authorId:' + this.searchResultSelectedElement!.id);
+            throw new Error('Cannot load books for selected author');
+          })
+        ).subscribe({
+          next: data => {
+            this.dataSource = data;
+            this.progressSpinner.closeDialog();
+          },
+          error: error => {
+            this.progressSpinner.closeDialog();
+            this.dataSource = [{ name: error.message, mustRead: true, deletedInLibrary: true }]
+          }
+        })
+      }
   }
 
   processingStatus() {
@@ -154,12 +212,15 @@ export class AppComponent {
   }
 
   switchToAuthor(author: Author) {
-
+    let sr = <SearchResult>{ name: Author.fullName(author.firstName, author.middleName, author.lastName), id: author.authorId }
+    this.searchResult = [sr]
+    this.searchResultSelected(sr)
   }
 
   switchToSerie(serieName: string) {
-    this.searchResult = [serieName]
-    this.searchResultSelected(serieName)
+    let sr = <SearchResult>{ name: serieName }
+    this.searchResult = [sr]
+    this.searchResultSelected(sr)
   }
 
 }

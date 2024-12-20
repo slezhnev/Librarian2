@@ -1,6 +1,7 @@
 package ru.lsv.librarian2.rest;
 
 import java.util.List;
+import java.util.function.Function;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
 
@@ -10,7 +11,7 @@ import org.jboss.resteasy.reactive.RestQuery;
 import io.quarkiverse.renarde.Controller;
 import jakarta.ws.rs.Path;
 import ru.lsv.librarian2.models.Book;
-import ru.lsv.librarian2.models.LibUser;
+import ru.lsv.librarian2.models.TreeProcessor;
 import ru.lsv.librarian2.rest.Authors.AuthorView;
 
 public class Books extends Controller {
@@ -45,6 +46,22 @@ public class Books extends Controller {
 			this.deletedInLibrary = book.deletedInLibrary;
 		}
 
+		BookView(Book book) {
+			this.bookId = book.bookId;
+			this.authors = book.authors == null ? new LinkedList<>()
+					: book.authors.stream().map(Authors.AUTHOR_MAPPER).collect(Collectors.toList());
+			this.title = book.title;
+			this.genre = book.genre;
+			this.language = book.language;
+			this.sourceLanguage = book.sourceLanguage;
+			this.serieName = book.serieName;
+			this.numInSerie = book.numInSerie;
+			this.annotation = book.annotation;
+			this.readed = null;
+			this.mustRead = null;
+			this.deletedInLibrary = book.deletedInLibrary;
+		}
+
 		BookView() {
 			this.bookId = null;
 			this.authors = new LinkedList<>();
@@ -62,6 +79,8 @@ public class Books extends Controller {
 
 	}
 
+	public static Function<Book, BookView> BOOK_MAPPER = el -> new BookView(el);
+
 	@Path("/book")
 	public BookView getBookById(@RestPath Integer id, @RestPath Integer userId) {
 		Book book = Book.findById(id);
@@ -72,9 +91,15 @@ public class Books extends Controller {
 		}
 	}
 
-	// @Path("/books/bySerie")
-	// public TemplateInstance getBookBySerie(@RestQuery String serieName) {
-	// return Templates.books(Book.listBySerie(serieName));
-	// }
+	@Path("/books/byAuthor")
+	public List<TreeProcessor.TreeNode> getBookBySerie(@RestPath Integer userId, @RestQuery Integer authorId) {
+		return TreeProcessor.convertToTree(Book.listByAuthor(authorId), userId);
+	}
+
+	@Path("/books/byAuthorRaw")
+	public List<BookView> getRawBookBySerie(@RestPath Integer userId, @RestQuery Integer authorId) {
+		return Book.listByAuthor(authorId).stream().map(BOOK_MAPPER).collect(Collectors.toList());
+	}
+
 
 }

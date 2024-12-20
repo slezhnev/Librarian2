@@ -19,5 +19,20 @@ export class Author {
 	firstName?: string;
 	middleName?: string;
 	lastName?: string;
+
+	static fullName(firstName: string | undefined, middleName: string | undefined, lastName: string | undefined): string {
+		let res: string = '';
+		if (lastName) {
+			res = lastName + " ";
+		}
+		if (firstName) {
+			res = res + firstName + " "
+		}
+		if (middleName) {
+			res = res + middleName
+		}
+		return res
+	}
+
 }
 

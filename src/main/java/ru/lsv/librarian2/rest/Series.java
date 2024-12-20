@@ -22,19 +22,19 @@ public class Series extends Controller {
 		return Book.searchBySerie(serieName);
 	}
 
-	@Path("/readedseries")
+	@Path("/series/readed")
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<String> getReadedSeries(@RestPath Integer userId, @RestQuery String serieName) {
 		return Book.searchForReadedSeries(serieName, userId);
 	}
 
-	@Path("/newinreadedseries")
+	@Path("/series/newinreaded")
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<String> getSeriesWithNewBooks(@RestPath Integer userId, @RestQuery String serieName) {
 		return Book.searchSeriesWithNewBooks(serieName, userId);
 	}
 
-	@Path("/booksinserie")
+	@Path("/series/books")
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<TreeProcessor.TreeNode> getTreeBySerie(@RestPath Integer userId, @RestQuery String serieName) {
 		return TreeProcessor.convertToTree(Book.listBySerie(serieName), userId);

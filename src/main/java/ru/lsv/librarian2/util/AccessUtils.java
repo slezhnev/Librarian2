@@ -6,7 +6,12 @@ public class AccessUtils {
 		if (searchString == null || searchString.isBlank()) {
 			return "%";
 		} else {
-			return searchString + "%";
+			String replaced = searchString.replace('*', '%');
+			if (!replaced.endsWith("%")) {
+				return replaced + "%";
+			} else {
+				return replaced;
+			}
 		}
 	}
 

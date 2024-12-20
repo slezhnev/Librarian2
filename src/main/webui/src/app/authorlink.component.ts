@@ -22,4 +22,7 @@ export class AuthorLink {
 		}
 	}
 	
+	fullName(firstName: string | undefined, middleName: string | undefined, lastName: string | undefined): string {
+		return Author.fullName(firstName, middleName, lastName)
+	}
 }

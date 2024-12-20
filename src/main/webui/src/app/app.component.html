@@ -29,7 +29,7 @@
         <mat-action-list name="searchResult" class="searchresult-mat-action-list"> 
           @for (sr of searchResult; track sr) {
               <button mat-list-item [value]="sr" (click)="searchResultSelected(sr)"
-              [ngClass]="{ 'background-highlight': searchResultSelectedElement === sr }">{{sr}}</button>
+              [ngClass]="{ 'background-highlight': searchResultSelectedElement === sr }">{{sr.name}}</button>
           }
         </mat-action-list>  
       </div>

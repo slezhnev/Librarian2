@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Sort;
@@ -215,6 +216,18 @@ public class Book extends PanacheEntityBase {
 			}
 		}
 		return seriesWithNew;
+	}
+
+	/**
+	 * Get a full list of book from specified author
+	 * 
+	 * @param authorId Author id
+	 * @return List of book
+	 */
+	public static List<Book> listByAuthor(Integer authorId) {
+		return find(
+				"from Book b join b.authors a where a.authorId = ?1 order by b.serieName, b.numInSerie, b.title",
+				authorId).list();
 	}
 
 	@Override
