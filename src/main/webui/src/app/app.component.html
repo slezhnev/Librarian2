@@ -42,7 +42,8 @@
         <mat-tree #tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor" class="bookstree">
           <!-- This is the tree node template for leaf nodes -->
           <mat-tree-node #matNode *matTreeNodeDef="let node" matTreeNodePadding
-          (click)="treeLeafSelected(node)" [ngClass]="{ 'treeitem-background-highlight': activeNode === node, 'treeitem-deleted': node.deletedInLibrary, 
+          (click)="treeLeafSelected(node)" (keyup.d)="selectForDownload(node)" (keyup.d)="selectAsReaded(node)"
+          [ngClass]="{ 'treeitem-background-highlight': activeNode === node, 'treeitem-deleted': node.deletedInLibrary, 
             'treeitem-readed': node.readed, 'treeitem-mustread': node.mustRead }">
             <button mat-icon-button></button> <span class="treeitem">{{node.name}}</span>
           </mat-tree-node> 

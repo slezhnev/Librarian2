@@ -7,10 +7,13 @@ import java.util.stream.Collectors;
 
 import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.RestQuery;
+import org.jboss.resteasy.reactive.RestResponse;
+import org.jboss.resteasy.reactive.RestResponse.ResponseBuilder;
 
 import io.quarkiverse.renarde.Controller;
 import jakarta.ws.rs.Path;
 import ru.lsv.librarian2.models.Book;
+import ru.lsv.librarian2.models.LibUser;
 import ru.lsv.librarian2.models.TreeProcessor;
 import ru.lsv.librarian2.rest.Authors.AuthorView;
 
@@ -105,4 +108,43 @@ public class Books extends Controller {
 	public List<BookView> getByTitle(@RestQuery String title) {
 		return Book.searchByTitle(title).stream().map(BOOK_MAPPER).collect(Collectors.toList());
 	}
+
+	@Path("/book/readed")
+	public RestResponse<Object> markAsReaded(@RestPath Integer userId, @RestQuery Integer bookId, @RestQuery Boolean readed) {
+		Book book = Book.findById(bookId);
+		if (book == null) {
+			return ResponseBuilder.notFound().build();
+		}
+		LibUser user = LibUser.findById(userId);
+		if (user == null) {
+			return ResponseBuilder.notFound().build();
+		}
+		if (!readed) {
+			book.readed.add(user);
+		} else {
+			book.readed.remove(user);
+		}
+		book.persist();
+		return ResponseBuilder.ok().build();
+	}
+
+	@Path("/book/mustRead")
+	public RestResponse<Object> markAsMustRead(@RestPath Integer userId, @RestQuery Integer bookId, @RestQuery Boolean mustRead) {
+		Book book = Book.findById(bookId);
+		if (book == null) {
+			return ResponseBuilder.notFound().build();
+		}
+		LibUser user = LibUser.findById(userId);
+		if (user == null) {
+			return ResponseBuilder.notFound().build();
+		}
+		if (!mustRead) {
+			book.mustRead.add(user);
+		} else {
+			book.mustRead.remove(user);
+		}
+		book.persist();
+		return ResponseBuilder.ok().build();
+	}
+
 }

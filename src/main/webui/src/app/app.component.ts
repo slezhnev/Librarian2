@@ -281,4 +281,46 @@ export class AppComponent {
     this.searchResultSelected(sr)
   }
 
+  selectForDownload(node: SearchTreeNode) {
+    let temp = true
+    if (node.mustRead) {
+      temp = false;
+    }
+    this.http.get('/books/mustRead/' + node.bookId + '/' + this.userId, {
+      params: {mustRead: temp},
+    }).pipe(
+      catchError(error => {
+        console.error('Cannot set MustRead mark for bookId: ' + node.bookId + ' and userId:' + this.userId);
+        throw new Error('Cannot load MustRead mark for book');
+      })
+    ).subscribe({
+      next: data => {
+        node.mustRead = temp
+      },
+      error: error => {
+      }
+    })
+}
+
+  selectAsReaded(node: SearchTreeNode) {
+    let temp = true
+    if (node.readed) {
+      node.readed = false;
+    }
+    this.http.get('/books/readed/' + node.bookId + '/' + this.userId, {
+      params: {readed: temp},
+    }).pipe(
+      catchError(error => {
+        console.error('Cannot set Readed mark for bookId: ' + node.bookId + ' and userId:' + this.userId);
+        throw new Error('Cannot load Readed mark for book');
+      })
+    ).subscribe({
+      next: data => {
+        node.readed = temp
+      },
+      error: error => {
+      }
+    })
+  }
+
 }
