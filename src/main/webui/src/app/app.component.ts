@@ -48,9 +48,9 @@ export class AppComponent {
 
   readonly http: HttpClient = inject(HttpClient)
 
-  searchType: string = "Authors";
+  searchType: string = "Books";
 
-  searchText: string = "Дивов"
+  searchText: string = "Боги"
 
   searchTypeParam: string = "All";
 
@@ -65,6 +65,15 @@ export class AppComponent {
   searchResultType: string = this.searchType;
 
   progressSpinner: ProgressSpinner = new ProgressSpinner();
+
+  isSearchTypeBooks(): boolean {
+    if (this.searchType === 'Books') {
+      this.searchTypeParam = 'All'
+      return true;      
+    } else {
+      return false;
+    }
+  }
 
   handleSearch() {
     this.searchResultType = this.searchType;
@@ -83,7 +92,7 @@ export class AppComponent {
         params: { serieName: this.searchText },
       }).pipe(
         catchError(error => {
-          console.error('Cannot get series for search "' + this.searchText + '" and userId:' + this.userId);
+          console.error('Cannot get series for search "' + this.searchText + '"');
           throw new Error('Cannot load series');
         })
       ).subscribe({
@@ -111,12 +120,31 @@ export class AppComponent {
         params: { lastName: this.searchText },
       }).pipe(
         catchError(error => {
-          console.error('Cannot get authors for search "' + this.searchText + '" and userId:' + this.userId);
+          console.error('Cannot get authors for search "' + this.searchText + '"');
           throw new Error('Cannot load authors');
         })
       ).subscribe({
         next: data => {
           this.searchResult = data.map(el => <SearchResult>{ name: Author.fullName(el.firstName, el.middleName, el.lastName), id: el.authorId })
+          this.progressSpinner.closeDialog();
+        },
+        error: error => {
+          this.searchResult = [<SearchResult>{ name: error.message }]
+          this.progressSpinner.closeDialog();
+        }
+      })
+    } else if (this.searchResultType === 'Books') {
+      this.progressSpinner.openDialog();
+      this.http.get<Book[]>('/books/byTitle', {
+        params: { title: this.searchText },
+      }).pipe(
+        catchError(error => {
+          console.error('Cannot get books for search "' + this.searchText + '"');
+          throw new Error('Cannot load authors');
+        })
+      ).subscribe({
+        next: data => {
+          this.searchResult = data.map(el => <SearchResult>{ name: el.title, id: el.bookId })
           this.progressSpinner.closeDialog();
         },
         error: error => {
@@ -171,6 +199,34 @@ export class AppComponent {
             this.dataSource = [{ name: error.message, mustRead: true, deletedInLibrary: true }]
           }
         })
+      } else
+      if (this.searchResultType === 'Books') {
+        this.progressSpinner.openDialog();
+        this.http.get<Book>('/book/' + this.searchResultSelectedElement!.id + '/' + this.userId + '/'          
+        ).pipe(
+          catchError(error => {
+            console.error('Cannot get book for bookId "' + this.searchResultSelectedElement!.id + '" and userId:' + this.userId);
+            throw new Error('Cannot load book');
+          })
+        ).subscribe({
+          next: data => {
+            const sr = <SearchTreeNode>{
+              name: data.title!,
+              children: [],
+              bookId: data.bookId!,
+              readed: data.readed,
+              mustRead: data.mustRead,
+              deletedInLibrary: data.deletedInLibrary
+            };
+            this.dataSource = [sr];
+            this.progressSpinner.closeDialog();
+            this.treeLeafSelected(sr)
+          },
+          error: error => {
+            this.progressSpinner.closeDialog();
+            this.dataSource = [{ name: error.message, mustRead: true, deletedInLibrary: true }]
+          }
+        })
       }
   }
 
@@ -213,12 +269,14 @@ export class AppComponent {
 
   switchToAuthor(author: Author) {
     let sr = <SearchResult>{ name: Author.fullName(author.firstName, author.middleName, author.lastName), id: author.authorId }
+    this.searchResultType = 'Authors'
     this.searchResult = [sr]
     this.searchResultSelected(sr)
   }
 
   switchToSerie(serieName: string) {
     let sr = <SearchResult>{ name: serieName }
+    this.searchResultType = 'Series'
     this.searchResult = [sr]
     this.searchResultSelected(sr)
   }

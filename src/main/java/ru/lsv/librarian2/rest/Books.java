@@ -101,5 +101,8 @@ public class Books extends Controller {
 		return Book.listByAuthor(authorId).stream().map(BOOK_MAPPER).collect(Collectors.toList());
 	}
 
-
+	@Path("/books/byTitle")
+	public List<BookView> getByTitle(@RestQuery String title) {
+		return Book.searchByTitle(title).stream().map(BOOK_MAPPER).collect(Collectors.toList());
+	}
 }

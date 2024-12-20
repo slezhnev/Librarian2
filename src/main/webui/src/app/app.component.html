@@ -6,7 +6,7 @@
           <mat-radio-button value="Books" class="searchtype-radiobutton">Books</mat-radio-button>
           <mat-radio-button value="Series" class="searchtype-radiobutton">Series</mat-radio-button>
         </mat-radio-group>
-        <mat-radio-group class="searchtype-param" [(ngModel)]="searchTypeParam">
+        <mat-radio-group class="searchtype-param" [(ngModel)]="searchTypeParam" [disabled]="isSearchTypeBooks()">
           <mat-radio-button value="All" class="searchtype-radiobutton">all</mat-radio-button>
           <mat-radio-button value="Readed" class="searchtype-radiobutton">readed</mat-radio-button>
           <mat-radio-button value="NewBooks" class="searchtype-radiobutton">with new books</mat-radio-button>
