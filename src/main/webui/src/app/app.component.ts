@@ -286,7 +286,7 @@ export class AppComponent {
     if (node.mustRead) {
       temp = false;
     }
-    this.http.get('/books/mustRead/' + node.bookId + '/' + this.userId, {
+    this.http.get('/book/mustRead/' + node.bookId + '/' + this.userId, {
       params: {mustRead: temp},
     }).pipe(
       catchError(error => {
@@ -305,9 +305,9 @@ export class AppComponent {
   selectAsReaded(node: SearchTreeNode) {
     let temp = true
     if (node.readed) {
-      node.readed = false;
+      temp = false;
     }
-    this.http.get('/books/readed/' + node.bookId + '/' + this.userId, {
+    this.http.get('/book/readed/' + node.bookId + '/' + this.userId, {
       params: {readed: temp},
     }).pipe(
       catchError(error => {

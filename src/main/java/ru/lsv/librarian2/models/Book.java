@@ -10,6 +10,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Sort;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.persistence.Cacheable;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -40,7 +41,7 @@ public class Book extends PanacheEntityBase {
 	/**
 	 * Book authors list
 	 */
-	@ManyToMany
+	@ManyToMany(cascade = CascadeType.ALL)
 	@JoinTable(name = "book_authors", joinColumns = @JoinColumn(name = "book_id"), inverseJoinColumns = @JoinColumn(name = "author_id"))
 	public List<Author> authors;
 	/**
@@ -89,14 +90,14 @@ public class Book extends PanacheEntityBase {
 	/**
 	 * Read mark
 	 */
-	@OneToMany
+	@ManyToMany(cascade = CascadeType.ALL)
 	@JoinTable(name = "book_readed", joinColumns = @JoinColumn(name = "book_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
 	public Set<LibUser> readed;
 
 	/**
 	 * Mark about "want to read"
 	 */
-	@OneToMany
+	@ManyToMany(cascade = CascadeType.ALL)
 	@JoinTable(name = "book_must_readed", joinColumns = @JoinColumn(name = "book_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
 	public Set<LibUser> mustRead;
 

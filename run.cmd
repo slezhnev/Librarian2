@@ -1,1 +1,1 @@
-call ./mvnw compile quarkus:dev
+call ./mvnw compile quarkus:dev 

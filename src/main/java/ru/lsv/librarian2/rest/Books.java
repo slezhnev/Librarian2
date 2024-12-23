@@ -2,8 +2,12 @@ package ru.lsv.librarian2.rest;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
+
+import org.hibernate.Hibernate;
+import org.jboss.logging.Logger;
 
 import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.RestQuery;
@@ -11,6 +15,7 @@ import org.jboss.resteasy.reactive.RestResponse;
 import org.jboss.resteasy.reactive.RestResponse.ResponseBuilder;
 
 import io.quarkiverse.renarde.Controller;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Path;
 import ru.lsv.librarian2.models.Book;
 import ru.lsv.librarian2.models.LibUser;
@@ -109,8 +114,11 @@ public class Books extends Controller {
 		return Book.searchByTitle(title).stream().map(BOOK_MAPPER).collect(Collectors.toList());
 	}
 
+	private static final Logger LOG = Logger.getLogger(Books.class);
+		
+	@Transactional
 	@Path("/book/readed")
-	public RestResponse<Object> markAsReaded(@RestPath Integer userId, @RestQuery Integer bookId, @RestQuery Boolean readed) {
+	public RestResponse<Object> markAsReaded(@RestPath Integer bookId, @RestPath Integer userId, @RestQuery Boolean readed) {
 		Book book = Book.findById(bookId);
 		if (book == null) {
 			return ResponseBuilder.notFound().build();
@@ -119,17 +127,20 @@ public class Books extends Controller {
 		if (user == null) {
 			return ResponseBuilder.notFound().build();
 		}
-		if (!readed) {
+		book.readed = new HashSet<>(book.readed);
+		book.readed.size();
+		if (readed) {
 			book.readed.add(user);
 		} else {
 			book.readed.remove(user);
 		}
-		book.persist();
+		book.persistAndFlush();
 		return ResponseBuilder.ok().build();
 	}
 
+	@Transactional
 	@Path("/book/mustRead")
-	public RestResponse<Object> markAsMustRead(@RestPath Integer userId, @RestQuery Integer bookId, @RestQuery Boolean mustRead) {
+	public RestResponse<Object> markAsMustRead(@RestPath Integer bookId, @RestPath Integer userId, @RestQuery Boolean mustRead) {
 		Book book = Book.findById(bookId);
 		if (book == null) {
 			return ResponseBuilder.notFound().build();
@@ -138,12 +149,14 @@ public class Books extends Controller {
 		if (user == null) {
 			return ResponseBuilder.notFound().build();
 		}
-		if (!mustRead) {
+		
+		book.mustRead = new HashSet<>(book.mustRead);
+		if (mustRead) {
 			book.mustRead.add(user);
 		} else {
 			book.mustRead.remove(user);
 		}
-		book.persist();
+		book.persistAndFlush();
 		return ResponseBuilder.ok().build();
 	}
 
