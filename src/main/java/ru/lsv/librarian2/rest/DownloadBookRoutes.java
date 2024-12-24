@@ -1,10 +1,12 @@
 package ru.lsv.librarian2.rest;
 
+import io.quarkus.vertx.web.Param;
+import io.quarkus.vertx.web.Route;
 import io.vertx.core.Vertx;
-import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.ext.web.RoutingContext;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.MediaType;
 import ru.lsv.librarian2.models.Book;
 import ru.lsv.librarian2.models.LibUser;
@@ -21,52 +23,54 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.reactive.RestPath;
-import org.jboss.resteasy.reactive.RestResponse;
-import org.jboss.resteasy.reactive.RestResponse.ResponseBuilder;
 
-import io.quarkiverse.renarde.Controller;
-import io.vertx.core.file.OpenOptions;
-
-public class DownloadBook extends Controller {
+@ApplicationScoped
+public class DownloadBookRoutes {
 
     private static final Logger LOG = Logger.getLogger(DownloadBookRoutes.class);
 
     @Inject
     Vertx vertx;
 
-    @Path("/download")
-    public RestResponse downloadBook(@RestPath Integer bookId, @RestPath Integer downloadType,
-            @RestPath Integer userId) {
+    @Route(path = "/downloadRoutes", methods = Route.HttpMethod.GET, type = Route.HandlerType.BLOCKING)
+    public void downloadBook(@Param String bookId, @Param String downloadType, @Param String userId,
+            RoutingContext context) {
         String zipFile = "C:/Users/sele0915/temp/cm-core-api-2023.2.5.zip";
         String fileToExtract = "cm-core-api";
 
-        Book book = Book.findById(bookId);
+        Optional<Integer> bId = toInt(bookId);
+        if (bId.isEmpty()) {
+            context.response().setStatusCode(400).end("Bad bookId was provided");
+            return;
+        }
+        Book book = Book.findById(bId.get());
         if (book == null) {
-            LOG.errorf("Cannot find specified book: %d", bookId);
-            return ResponseBuilder.create(400, "Cannot find specified book").build();
+            context.response().setStatusCode(400).end("Cannot find specified book");
+            return;
         }
-        if (downloadType != 1 && downloadType != 2) {
-            LOG.errorf("Bad downloadType was provided: %d", downloadType);
-            return ResponseBuilder.create(400, "Bad downloadType was provided").build();
+        Optional<Integer> dType = toInt(downloadType);
+        if (dType.isEmpty() || dType.get() != 1 || dType.get() != 2) {
+            context.response().setStatusCode(400).end("Bad downloadType was provided");
+            return;
         }
-        LibUser user = LibUser.findById(userId);
+        Optional<Integer> uId = toInt(userId);
+        LibUser user = LibUser.findById(uId.get());
         if (user == null) {
-            LOG.errorf("Cannot find specified user: %d", userId);
-            return ResponseBuilder.create(400, "Cannot find specified user").build();
+            context.response().setStatusCode(400).end("Cannot find specified user");
+            return;
         }
         // File arcFile = new File(book.library.storagePath
         // + File.separator + book.zipFileName);
         File arcFile = new File(zipFile);
         if (!arcFile.exists()) {
-            LOG.errorf("Cannot find arc file '%s' for book: %d", arcFile.getAbsolutePath(), bookId);
-            return ResponseBuilder.create(400, "Cannot find library archive file").build();
+            LOG.errorf("Cannot find arc file '%s' for book: %d", arcFile.getAbsolutePath(), bId.get());
+            context.response().setStatusCode(400).end("Cannot find library archive file");
+            return;
         }
         String outputFileName = cleanFileName(book.titleWithSerie());
-        switch (downloadType) {
+        switch (dType.get()) {
             case 1 -> {
                 outputFileName = outputFileName + ".fb2";
             }
@@ -79,21 +83,27 @@ public class DownloadBook extends Controller {
             tempOutputFile = File.createTempFile("librarian2", outputFileName);
         } catch (IOException ex) {
             LOG.errorf(ex, "Cannot create temp file with prefix: '%s' and suffix: %s", "librarian2", outputFileName);
-            return ResponseBuilder.create(500, "Cannot create temp file").build();
+            context.response().setStatusCode(500).end("Cannot create temp file");
+            return;
         }
+        context.response()
+                .putHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8\"" + outputFileName + "\"")
+                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM)
+                .setStatusCode(200);
 
-        boolean found = false;
         try (OutputStream mainOut = new FileOutputStream(tempOutputFile)) {
             OutputStream out;
-            switch (downloadType) {
+            switch (dType.get()) {
                 case 1 -> out = mainOut;
                 default -> out = new ZipArchiveOutputStream(mainOut);
             }
             try (ZipArchiveInputStream arcInput = new ZipArchiveInputStream(new FileInputStream(arcFile))) {
                 ArchiveEntry entry;
                 while ((entry = arcInput.getNextEntry()) != null) {
-                    String id = FilenameUtils.getBaseName(entry.getName());
-                    if (id.equals(book.id)) {
+                    String name = entry.getName();
+                    String id = name.substring(0, name.indexOf("."));
+                    // if (id.equals(book.id)) {
+                    if (id.equals(fileToExtract)) {
                         if (out instanceof ZipArchiveOutputStream zipArchiveOutputStream) {
                             zipArchiveOutputStream.setLevel(9);
                             zipArchiveOutputStream
@@ -103,30 +113,32 @@ public class DownloadBook extends Controller {
                         if (out instanceof ZipArchiveOutputStream zipArchiveOutputStream) {
                             zipArchiveOutputStream.closeArchiveEntry();
                         }
-                        found = true;
                         break;
                     }
                 }
             }
         } catch (IOException ex) {
             LOG.errorf(ex, "Got an IOException while preparing file for download for '%s' for book: %d",
-                    arcFile.getAbsolutePath(), bookId);
-            return ResponseBuilder.create(500, "Exception while forming file to download").build();
+                    arcFile.getAbsolutePath(), bId.get());
+            context.response().setStatusCode(500).end("Exception while forming file to download");
+            return;
         }
 
-        if (found) {
-            FileSystem fileSystem = vertx.fileSystem();
-            fileSystem.open(tempOutputFile.getAbsolutePath(), new OpenOptions());
-            return ResponseBuilder
-                    .ok(fileSystem.openBlocking(tempOutputFile.getAbsolutePath(), new OpenOptions()),
-                            MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION.toString(),
-                            "attachment; filename*=UTF-8\"" + outputFileName + "\"")
-                    .build();
-        } else {
-            LOG.errorf("Cannot find book %d in '%s'",
-                    bookId, arcFile.getAbsolutePath());
-            return ResponseBuilder.create(400, "Cannot find book in archive").build();
+        context.response().sendFile(tempOutputFile.getAbsolutePath()).onComplete(ar -> {
+            // Then transfer is finished - we should delete temp file
+            tempOutputFile.deleteOnExit(); 
+            tempOutputFile.delete();
+            if (ar.succeeded()) {
+                // We should also remove mustRead mark and place readed
+            }
+        });
+    }
+
+    private Optional<Integer> toInt(String intVal) {
+        try {
+            return Optional.of(Integer.valueOf(intVal));
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
         }
     }
 

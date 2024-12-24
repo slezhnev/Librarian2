@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.jboss.logging.Logger;
 
 import org.jboss.resteasy.reactive.RestPath;
