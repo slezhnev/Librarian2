@@ -15,7 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.transaction.Transactional;
-import ru.lsv.librarian2.util.AccessUtils;
+import ru.lsv.librarian2.util.CommonUtils;
 
 @Entity
 @Cacheable
@@ -73,7 +73,7 @@ public class Author extends PanacheEntityBase {
 
 	public static List<Author> search(String lastNameSearch) {
 		return list("from Author where lastName like ?1", Sort.by("lastName").and("firstName").and("middleName"),
-				AccessUtils.updateSearch(lastNameSearch));
+				CommonUtils.updateSearch(lastNameSearch));
 	}
 
 	@SuppressWarnings("unused")
@@ -95,7 +95,7 @@ public class Author extends PanacheEntityBase {
 				"select a.authorId, u.userId, count(b.bookId) as totalInSerie from Author a left join a.books b left join b.readed u "
 						+ "where a.lastName like ?1 and (u.userId = ?2 or u.userId is null) "
 						+ "group by a.authorId, u.userId order by a.authorId, u.userId",
-				AccessUtils.updateSearch(lastNameSearch), userId).project(SearchAuthor.class).list();
+				CommonUtils.updateSearch(lastNameSearch), userId).project(SearchAuthor.class).list();
 		SearchAuthor prev = null;
 		List<Integer> foundAuthors = new ArrayList<>();
 		for (SearchAuthor curr : authorIds) {
@@ -112,7 +112,7 @@ public class Author extends PanacheEntityBase {
 		List<Integer> authorIds = find(
 				"select distinct a.authorId from Author a left join a.books b left join b.readed u "
 						+ "where a.lastName like ?1 and u.userId = ?2",
-				AccessUtils.updateSearch(lastNameSearch), userId).project(Integer.class).list();
+				CommonUtils.updateSearch(lastNameSearch), userId).project(Integer.class).list();
 		return list("from Author where authorId in ?1", Sort.by("lastName").and("firstName").and("middleName"),
 				authorIds);
 	}

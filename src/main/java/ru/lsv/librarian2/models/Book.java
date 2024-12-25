@@ -20,7 +20,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import ru.lsv.librarian2.util.AccessUtils;
+import ru.lsv.librarian2.util.CommonUtils;
 
 @Entity
 @Cacheable
@@ -158,7 +158,7 @@ public class Book extends PanacheEntityBase {
 	 */
 	public static List<String> searchBySerie(String serieSearch) {
 		return find("select distinct serieName from Book where serieName like ?1 order by serieName",
-				AccessUtils.updateSearch(serieSearch)).project(String.class).list();
+				CommonUtils.updateSearch(serieSearch)).project(String.class).list();
 	}
 
 	/**
@@ -171,7 +171,7 @@ public class Book extends PanacheEntityBase {
 	public static List<String> searchForReadedSeries(String serieSearch, Integer userId) {
 		return find(
 				"select distinct b.serieName from Book b join b.readed r where b.serieName like ?1 and r.userId = ?2 order by b.serieName",
-				AccessUtils.updateSearch(serieSearch), userId).project(String.class).stream()
+				CommonUtils.updateSearch(serieSearch), userId).project(String.class).stream()
 				.filter(el -> !el.isBlank()).collect(Collectors.toList());
 	}
 
@@ -206,7 +206,7 @@ public class Book extends PanacheEntityBase {
 				"select b.serieName, u.userId, count(b.bookId) as totalInSerie from Book b " + "left join b.readed u "
 						+ "where b.serieName like ?1 and (u.userId = ?2 or u.userId is null) "
 						+ "group by b.serieName, u.userId order by b.serieName, u.userId",
-				AccessUtils.updateSearch(serieSearch), userId).project(ReadedSeries.class).list();
+				CommonUtils.updateSearch(serieSearch), userId).project(ReadedSeries.class).list();
 		for (ReadedSeries rs : series) {
 			if (rs.serieName != null && !rs.serieName.isBlank()) {
 				if (prev != null && prev.serieName != null && prev.serieName.equals(rs.serieName)) {
@@ -237,7 +237,7 @@ public class Book extends PanacheEntityBase {
 	 * @return List of books
 	 */
 	public static List<Book> searchByTitle(String searchTitle) {
-		return list("from Book where title like ?1", Sort.by("title"), AccessUtils.updateSearch(searchTitle));
+		return list("from Book where title like ?1", Sort.by("title"), CommonUtils.updateSearch(searchTitle));
 	}
 
 	@Override
@@ -248,7 +248,7 @@ public class Book extends PanacheEntityBase {
 
 	public String titleWithSerie() {
 		if (serieName != null && !serieName.isBlank()) {
-			return String.format("%s - %d", this.title, this.numInSerie);
+			return String.format("%s (%s - %d)", this.title, this.serieName, this.numInSerie);
 		} else {
 			return this.title;
 		}

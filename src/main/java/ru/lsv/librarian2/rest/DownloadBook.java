@@ -6,6 +6,8 @@ import io.vertx.core.http.HttpHeaders;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.MediaType;
+import ru.homyakin.iuliia.Schemas;
+import ru.homyakin.iuliia.Translator;
 import ru.lsv.librarian2.models.Book;
 import ru.lsv.librarian2.models.LibUser;
 
@@ -13,6 +15,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
@@ -33,16 +36,17 @@ import io.vertx.core.file.OpenOptions;
 
 public class DownloadBook extends Controller {
 
-    private static final Logger LOG = Logger.getLogger(DownloadBookRoutes.class);
+    private static final Logger LOG = Logger.getLogger(DownloadBook.class);
 
     @Inject
     Vertx vertx;
+
+    private final Translator translator = new Translator(Schemas.YANDEX_MAPS);
 
     @Path("/download")
     public RestResponse downloadBook(@RestPath Integer bookId, @RestPath Integer downloadType,
             @RestPath Integer userId) {
         String zipFile = "C:/Users/sele0915/temp/cm-core-api-2023.2.5.zip";
-        String fileToExtract = "cm-core-api";
 
         Book book = Book.findById(bookId);
         if (book == null) {
@@ -65,7 +69,7 @@ public class DownloadBook extends Controller {
             LOG.errorf("Cannot find arc file '%s' for book: %d", arcFile.getAbsolutePath(), bookId);
             return ResponseBuilder.create(400, "Cannot find library archive file").build();
         }
-        String outputFileName = cleanFileName(book.titleWithSerie());
+        String outputFileName = translator.translate(cleanFileName(book.titleWithSerie()));
         switch (downloadType) {
             case 1 -> {
                 outputFileName = outputFileName + ".fb2";
@@ -102,7 +106,8 @@ public class DownloadBook extends Controller {
                         IOUtils.copy(arcInput, out);
                         if (out instanceof ZipArchiveOutputStream zipArchiveOutputStream) {
                             zipArchiveOutputStream.closeArchiveEntry();
-                        }
+                            zipArchiveOutputStream.finish();
+                        }                        
                         found = true;
                         break;
                     }
@@ -120,12 +125,13 @@ public class DownloadBook extends Controller {
             return ResponseBuilder
                     .ok(fileSystem.openBlocking(tempOutputFile.getAbsolutePath(), new OpenOptions()),
                             MediaType.APPLICATION_OCTET_STREAM)
+                    .encoding(StandardCharsets.UTF_8.toString())
                     .header(HttpHeaders.CONTENT_DISPOSITION.toString(),
-                            "attachment; filename*=UTF-8\"" + outputFileName + "\"")
+                            "attachment; filename=\"" + outputFileName + "\"")
                     .build();
         } else {
-            LOG.errorf("Cannot find book %d in '%s'",
-                    bookId, arcFile.getAbsolutePath());
+            LOG.errorf("Cannot find book %d (file id: %d) in '%s'",
+                    book.bookId, book.id, arcFile.getAbsolutePath());
             return ResponseBuilder.create(400, "Cannot find book in archive").build();
         }
     }
