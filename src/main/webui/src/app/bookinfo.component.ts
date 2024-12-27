@@ -4,10 +4,13 @@ import { Book, Author } from "./models"
 import { AuthorLink } from './authorlink.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatRadioModule } from '@angular/material/radio';
+import { FormsModule } from '@angular/forms';
+
 
 @Component({
 	selector: 'bookinfo',
-	imports: [AuthorLink, MatButtonModule, MatCardModule],
+	imports: [AuthorLink, MatButtonModule, MatCardModule, MatRadioModule, FormsModule],
 	templateUrl: './bookinfo.component.html',
 })
 
@@ -19,9 +22,15 @@ export class BookInfo {
 	@Output() switchToAuthorEvent = new EventEmitter<Author>();
 	@Output() switchToSerieEvent = new EventEmitter<string>();
 
+	downloadType = 'fb2.zip';
+
 	downloadBook() {
-		if (this.book && this.book.bookId && this.book.libraryId) {
-			this.ds.downloadBook(this.book.bookId, this.book.libraryId);
+		if (this.book && this.book.bookId) {
+			if (this.downloadType == "fb2") {
+				this.ds.downloadBook(this.book.bookId, 1);
+			} else {
+				this.ds.downloadBook(this.book.bookId, 2);
+			}
 		}
 	}
 

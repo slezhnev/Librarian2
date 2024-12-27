@@ -12,9 +12,16 @@
 	</div>
 } 
 <p></p>
-<div class="bookinfo-download">
-	<button mat-flat-button (click)="downloadBook()" class="bookinfo-download">Download book</button>
-</div>
+<mat-card-content>
+<mat-radio-group class="download-radio-group" [(ngModel)]="downloadType">
+	<mat-radio-button value="fb2" class="download-radiobutton">fb2</mat-radio-button>
+	<mat-radio-button value="fb2.zip" class="download-radiobutton">fb2.zip</mat-radio-button>
+</mat-radio-group>
+</mat-card-content>
+<br/>
+<mat-card-content>
+<button mat-flat-button (click)="downloadBook()" class="bookinfo-download">Download book</button>
+</mat-card-content>
 } @else {
 Book still not set
 }

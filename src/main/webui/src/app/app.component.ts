@@ -15,6 +15,7 @@ import { HttpClient } from '@angular/common/http';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { catchError } from 'rxjs';
 import { Book, Author } from "./models"
+import { UserWrapper } from './user.service';
 
 interface SearchTreeNode {
   name: string;
@@ -44,6 +45,9 @@ class SearchResult {
 })
 
 export class AppComponent {
+
+  userWrapper = inject(UserWrapper)
+
   title = 'librarian2';
 
   readonly http: HttpClient = inject(HttpClient)
@@ -57,8 +61,6 @@ export class AppComponent {
   searchForm: FormGroup = new FormGroup({
     searchEdit: new FormControl()
   })
-
-  userId: number = 3;
 
   searchResult: SearchResult[] = [];
 
@@ -80,10 +82,10 @@ export class AppComponent {
     if (this.searchResultType === 'Series') {
       let request = '';
       if (this.searchTypeParam == 'NewBooks') {
-        request = '/series/newinreaded/' + this.userId + '/'
+        request = '/series/newinreaded/' + this.userWrapper.userId + '/'
       } else
         if (this.searchTypeParam == 'Readed') {
-          request = '/series/readed' + this.userId + '/'
+          request = '/series/readed' + this.userWrapper.userId + '/'
         } else {
           request = '/series'
         }
@@ -108,10 +110,10 @@ export class AppComponent {
     } else if (this.searchResultType === 'Authors') {
       let request = '';
       if (this.searchTypeParam == 'NewBooks') {
-        request = '/authors/withNewBook/' + this.userId + '/'
+        request = '/authors/withNewBook/' + this.userWrapper.userId + '/'
       } else
         if (this.searchTypeParam == 'Readed') {
-          request = '/authors/readed/' + this.userId + '/'
+          request = '/authors/readed/' + this.userWrapper.userId + '/'
         } else {
           request = '/authors/byLastName'
         }
@@ -162,11 +164,11 @@ export class AppComponent {
     this.progressSpinner.openDialog();
     if (this.searchResultType === 'Series') {
       this.progressSpinner.openDialog();
-      this.http.get<SearchTreeNode[]>('/series/books/' + this.userId + '/', {
+      this.http.get<SearchTreeNode[]>('/series/books/' + this.userWrapper.userId + '/', {
         params: { serieName: this.searchResultSelectedElement!.name },
       }).pipe(
         catchError(error => {
-          console.error('Cannot get books for serie "' + this.searchResultSelectedElement!.name + '" and userId:' + this.userId);
+          console.error('Cannot get books for serie "' + this.searchResultSelectedElement!.name + '" and userId:' + this.userWrapper.userId);
           throw new Error('Cannot load books for selected serie');
         })
       ).subscribe({
@@ -182,7 +184,7 @@ export class AppComponent {
     } else
       if (this.searchResultType === 'Authors') {
         this.progressSpinner.openDialog();
-        this.http.get<SearchTreeNode[]>('/books/byAuthor/' + this.userId + '/', {
+        this.http.get<SearchTreeNode[]>('/books/byAuthor/' + this.userWrapper.userId + '/', {
           params: { authorId: "" + this.searchResultSelectedElement!.id },
         }).pipe(
           catchError(error => {
@@ -202,10 +204,10 @@ export class AppComponent {
       } else
       if (this.searchResultType === 'Books') {
         this.progressSpinner.openDialog();
-        this.http.get<Book>('/book/' + this.searchResultSelectedElement!.id + '/' + this.userId + '/'          
+        this.http.get<Book>('/book/' + this.searchResultSelectedElement!.id + '/' + this.userWrapper.userId + '/'          
         ).pipe(
           catchError(error => {
-            console.error('Cannot get book for bookId "' + this.searchResultSelectedElement!.id + '" and userId:' + this.userId);
+            console.error('Cannot get book for bookId "' + this.searchResultSelectedElement!.id + '" and userId:' + this.userWrapper.userId);
             throw new Error('Cannot load book');
           })
         ).subscribe({
@@ -248,10 +250,10 @@ export class AppComponent {
     if (node.bookId) {
       this.activeNode = node;
       this.progressSpinner.openDialog();
-      this.http.get<Book>('/book/' + node.bookId + '/' + this.userId
+      this.http.get<Book>('/book/' + node.bookId + '/' + this.userWrapper.userId
       ).pipe(
         catchError(error => {
-          console.error('Cannot get book for bookId: ' + node.bookId + ' and userId:' + this.userId);
+          console.error('Cannot get book for bookId: ' + node.bookId + ' and userId:' + this.userWrapper.userId);
           throw new Error('Cannot load selected book');
         })
       ).subscribe({
@@ -286,11 +288,11 @@ export class AppComponent {
     if (node.mustRead) {
       temp = false;
     }
-    this.http.get('/book/mustRead/' + node.bookId + '/' + this.userId, {
+    this.http.get('/book/mustRead/' + node.bookId + '/' + this.userWrapper.userId, {
       params: {mustRead: temp},
     }).pipe(
       catchError(error => {
-        console.error('Cannot set MustRead mark for bookId: ' + node.bookId + ' and userId:' + this.userId);
+        console.error('Cannot set MustRead mark for bookId: ' + node.bookId + ' and userId:' + this.userWrapper.userId);
         throw new Error('Cannot load MustRead mark for book');
       })
     ).subscribe({
@@ -307,11 +309,11 @@ export class AppComponent {
     if (node.readed) {
       temp = false;
     }
-    this.http.get('/book/readed/' + node.bookId + '/' + this.userId, {
+    this.http.get('/book/readed/' + node.bookId + '/' + this.userWrapper.userId, {
       params: {readed: temp},
     }).pipe(
       catchError(error => {
-        console.error('Cannot set Readed mark for bookId: ' + node.bookId + ' and userId:' + this.userId);
+        console.error('Cannot set Readed mark for bookId: ' + node.bookId + ' and userId:' + this.userWrapper.userId);
         throw new Error('Cannot load Readed mark for book');
       })
     ).subscribe({

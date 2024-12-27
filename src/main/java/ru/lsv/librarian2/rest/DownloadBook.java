@@ -4,21 +4,26 @@ import io.vertx.core.Vertx;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpHeaders;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.MediaType;
 import ru.homyakin.iuliia.Schemas;
 import ru.homyakin.iuliia.Translator;
 import ru.lsv.librarian2.models.Book;
 import ru.lsv.librarian2.models.LibUser;
+import ru.lsv.librarian2.util.CommonUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
-import java.util.Optional;
+import java.util.HashSet;
+import java.util.Properties;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -46,29 +51,67 @@ public class DownloadBook extends Controller {
     @Path("/download")
     public RestResponse downloadBook(@RestPath Integer bookId, @RestPath Integer downloadType,
             @RestPath Integer userId) {
-        String zipFile = "C:/Users/sele0915/temp/cm-core-api-2023.2.5.zip";
-
         Book book = Book.findById(bookId);
         if (book == null) {
-            LOG.errorf("Cannot find specified book: %d", bookId);
+            LOG.errorf("[bookId: %d] Cannot find specified book", bookId);
             return ResponseBuilder.create(400, "Cannot find specified book").build();
         }
         if (downloadType != 1 && downloadType != 2) {
-            LOG.errorf("Bad downloadType was provided: %d", downloadType);
+            LOG.errorf("[bookId: %d] Bad downloadType was provided: %d", bookId, downloadType);
             return ResponseBuilder.create(400, "Bad downloadType was provided").build();
         }
         LibUser user = LibUser.findById(userId);
         if (user == null) {
-            LOG.errorf("Cannot find specified user: %d", userId);
+            LOG.errorf("[bookId: %d] Cannot find specified user: %d", bookId, userId);
             return ResponseBuilder.create(400, "Cannot find specified user").build();
         }
-        // File arcFile = new File(book.library.storagePath
-        // + File.separator + book.zipFileName);
-        File arcFile = new File(zipFile);
+        if (book.library == null) {
+            LOG.errorf("[bookId: %d] Book does not have a link to library", bookId);
+            return ResponseBuilder.create(400, "Book does not have a link to library").build();
+        }
+        String storagePath = book.library.storagePath;
+        String storageOverrideFilename = System.getProperty("library.storagePath.override", "");
+        if (storageOverrideFilename != null && !storageOverrideFilename.isBlank()) {
+            LOG.infof(
+                    "[bookId: %d] Storage path should be overwritten. Trying to find '%s'",
+                    bookId, storageOverrideFilename);
+            File spOverride = new File(storageOverrideFilename);
+            if (spOverride.exists()) {
+                Properties props = new Properties();
+                try (FileInputStream fis = new FileInputStream(spOverride)) {
+                    props.load(new InputStreamReader(fis, Charset.forName("UTF-8")));
+                } catch (IOException ex) {
+                    LOG.errorf(ex,
+                            "[bookId: %d] Storage path should be overwritten. But got IOException while reading a file '%s'",
+                            bookId, spOverride.getAbsolutePath());
+                    return ResponseBuilder.create(500, "Cannot read override library location file").build();
+                }
+                String newStoragePath = props.getProperty("library.storagePath." + book.library.libraryId);
+                if (newStoragePath != null) {
+                    LOG.infof("[bookId: %d] Storage path was overwritten from '%s' to '%s'", bookId,
+                            book.library.storagePath, newStoragePath);
+                    storagePath = newStoragePath;
+                } else {
+                    LOG.errorf(
+                            "[bookId: %d] Storage path should be overwritten. But file '%s' does not contain needed key %s",
+                            bookId, storageOverrideFilename, "library.storagePath" + book.library.libraryId);
+                    return ResponseBuilder.create(500, "Cannot get override library location file").build();
+                }
+            } else {
+                LOG.errorf(
+                        "[bookId: %d] Storage path should be overwritten. But file '%s' does not exists",
+                        bookId, storageOverrideFilename);
+                return ResponseBuilder.create(500, "Cannot override library location").build();
+            }
+
+        }
+        File arcFile = new File(storagePath
+                + File.separator + book.zipFileName);
         if (!arcFile.exists()) {
-            LOG.errorf("Cannot find arc file '%s' for book: %d", arcFile.getAbsolutePath(), bookId);
+            LOG.errorf("[bookId: %d] Cannot find arc file '%s' for book", bookId, arcFile.getAbsolutePath());
             return ResponseBuilder.create(400, "Cannot find library archive file").build();
         }
+        LOG.infof("[bookId: %d] Found archive file in library - '%s'", bookId, storagePath);
         String outputFileName = translator.translate(cleanFileName(book.titleWithSerie()));
         switch (downloadType) {
             case 1 -> {
@@ -82,10 +125,13 @@ public class DownloadBook extends Controller {
         try {
             tempOutputFile = File.createTempFile("librarian2", outputFileName);
         } catch (IOException ex) {
-            LOG.errorf(ex, "Cannot create temp file with prefix: '%s' and suffix: %s", "librarian2", outputFileName);
+            LOG.errorf(ex, "[bookId: %d] Cannot create temp file with prefix: '%s' and suffix: %s", bookId,
+                    "librarian2", outputFileName);
             return ResponseBuilder.create(500, "Cannot create temp file").build();
         }
 
+        LOG.infof("[bookId: %d] Temp file '%s' was created. Starting to search a book inside archive", bookId,
+                tempOutputFile.getAbsolutePath());
         boolean found = false;
         try (OutputStream mainOut = new FileOutputStream(tempOutputFile)) {
             OutputStream out;
@@ -98,6 +144,8 @@ public class DownloadBook extends Controller {
                 while ((entry = arcInput.getNextEntry()) != null) {
                     String id = FilenameUtils.getBaseName(entry.getName());
                     if (id.equals(book.id)) {
+                        LOG.infof("[bookId: %d] Book found as  '%s'. Starting to copy it to temp file", bookId,
+                                book.id);
                         if (out instanceof ZipArchiveOutputStream zipArchiveOutputStream) {
                             zipArchiveOutputStream.setLevel(9);
                             zipArchiveOutputStream
@@ -107,21 +155,25 @@ public class DownloadBook extends Controller {
                         if (out instanceof ZipArchiveOutputStream zipArchiveOutputStream) {
                             zipArchiveOutputStream.closeArchiveEntry();
                             zipArchiveOutputStream.finish();
-                        }                        
+                        }
+                        LOG.infof("[bookId: %d] Book found as '%s'. File copied", bookId, book.id);
                         found = true;
                         break;
                     }
                 }
             }
         } catch (IOException ex) {
-            LOG.errorf(ex, "Got an IOException while preparing file for download for '%s' for book: %d",
-                    arcFile.getAbsolutePath(), bookId);
+            LOG.errorf(ex, "[bookId: %d] Got an IOException while preparing file for download for '%s' for book",
+                    bookId,
+                    arcFile.getAbsolutePath());
             return ResponseBuilder.create(500, "Exception while forming file to download").build();
         }
 
         if (found) {
             FileSystem fileSystem = vertx.fileSystem();
             fileSystem.open(tempOutputFile.getAbsolutePath(), new OpenOptions());
+            CommonUtils.updateDownloadedBook(book.bookId, user.userId);
+            LOG.infof("[bookId: %d] Sending file to customer", bookId, book.id);
             return ResponseBuilder
                     .ok(fileSystem.openBlocking(tempOutputFile.getAbsolutePath(), new OpenOptions()),
                             MediaType.APPLICATION_OCTET_STREAM)
@@ -130,7 +182,7 @@ public class DownloadBook extends Controller {
                             "attachment; filename=\"" + outputFileName + "\"")
                     .build();
         } else {
-            LOG.errorf("Cannot find book %d (file id: %d) in '%s'",
+            LOG.errorf("[bookId: %d] Cannot find book (file id: %d) in '%s'",
                     book.bookId, book.id, arcFile.getAbsolutePath());
             return ResponseBuilder.create(400, "Cannot find book in archive").build();
         }

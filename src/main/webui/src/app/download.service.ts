@@ -1,16 +1,15 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { UserWrapper } from './user.service';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class DownloadService {
-	
-	constructor() {	
-		
-	}
-	
-	downloadBook(bookId: number, libraryId : number) {
-		
+
+	userWrapper = inject(UserWrapper)
+
+	downloadBook(bookId: number, downloadType: number) {
+		window.open("/download/" +bookId + "/" + downloadType + "/" + this.userWrapper.userId, "_blank");		
 	}
 	
 }
