@@ -12,6 +12,7 @@ import ru.homyakin.iuliia.Translator;
 import ru.lsv.librarian2.models.Book;
 import ru.lsv.librarian2.models.LibUser;
 import ru.lsv.librarian2.util.CommonUtils;
+import ru.lsv.librarian2.util.CommonUtils.StoragePathOverrideException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -69,41 +70,11 @@ public class DownloadBook extends Controller {
             LOG.errorf("[bookId: %d] Book does not have a link to library", bookId);
             return ResponseBuilder.create(400, "Book does not have a link to library").build();
         }
-        String storagePath = book.library.storagePath;
-        String storageOverrideFilename = System.getProperty("library.storagePath.override", "");
-        if (storageOverrideFilename != null && !storageOverrideFilename.isBlank()) {
-            LOG.infof(
-                    "[bookId: %d] Storage path should be overwritten. Trying to find '%s'",
-                    bookId, storageOverrideFilename);
-            File spOverride = new File(storageOverrideFilename);
-            if (spOverride.exists()) {
-                Properties props = new Properties();
-                try (FileInputStream fis = new FileInputStream(spOverride)) {
-                    props.load(new InputStreamReader(fis, Charset.forName("UTF-8")));
-                } catch (IOException ex) {
-                    LOG.errorf(ex,
-                            "[bookId: %d] Storage path should be overwritten. But got IOException while reading a file '%s'",
-                            bookId, spOverride.getAbsolutePath());
-                    return ResponseBuilder.create(500, "Cannot read override library location file").build();
-                }
-                String newStoragePath = props.getProperty("library.storagePath." + book.library.libraryId);
-                if (newStoragePath != null) {
-                    LOG.infof("[bookId: %d] Storage path was overwritten from '%s' to '%s'", bookId,
-                            book.library.storagePath, newStoragePath);
-                    storagePath = newStoragePath;
-                } else {
-                    LOG.errorf(
-                            "[bookId: %d] Storage path should be overwritten. But file '%s' does not contain needed key %s",
-                            bookId, storageOverrideFilename, "library.storagePath" + book.library.libraryId);
-                    return ResponseBuilder.create(500, "Cannot get override library location file").build();
-                }
-            } else {
-                LOG.errorf(
-                        "[bookId: %d] Storage path should be overwritten. But file '%s' does not exists",
-                        bookId, storageOverrideFilename);
-                return ResponseBuilder.create(500, "Cannot override library location").build();
-            }
-
+        String storagePath;
+        try {
+            storagePath = CommonUtils.overrideStoragePathIfNeeded(book.library.storagePath, book.library.libraryId);
+        } catch (StoragePathOverrideException e) {
+            return ResponseBuilder.create(500, "Got an exception while trying to override library storage location").build();
         }
         File arcFile = new File(storagePath
                 + File.separator + book.zipFileName);
