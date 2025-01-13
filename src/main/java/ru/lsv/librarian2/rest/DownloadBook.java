@@ -4,7 +4,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpHeaders;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.MediaType;
 import ru.homyakin.iuliia.Schemas;
@@ -18,14 +17,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Properties;
-
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
@@ -184,7 +178,7 @@ public class DownloadBook extends Controller {
                 cleanName.append((char) c);
             }
         }
-        // Дополнительно проверим на '..'
+        // Check additionally for '..'
         while (cleanName.indexOf("..") > -1) {
             cleanName.replace(cleanName.indexOf(".."), cleanName.indexOf("..") + 2, "__");
         }

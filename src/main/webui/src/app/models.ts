@@ -36,3 +36,14 @@ export class Author {
 
 }
 
+export class LoadStatus {
+	currentLibrary?: string
+	totalArcsToProcess?: number;
+	currentArcsToProcess?: number;
+	currentArcName? : string;
+	totalFilesToProcess?: number;
+	currentFileToProcess?: number;
+	wasErrorOnLoad?: boolean;
+	checkinginProgress?: boolean;
+}
+

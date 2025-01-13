@@ -35,6 +35,10 @@ public class LoadStatus {
 	 * Признак ошибки при загрузке
 	 */
 	private boolean wasErrorOnLoad = false;
+	/**
+	 * Mark that checking was started, but not yet finished
+	 */
+	private boolean checkinginProgress = false;
 
 	/**
 	 * Hide constructor
@@ -209,6 +213,14 @@ public class LoadStatus {
 		this.wasErrorOnLoad = wasErrorOnLoad;
 	}
 
+	public boolean isCheckinginProgress() {
+		return checkinginProgress;
+	}
+
+	public void setCheckinginProgress(boolean checkinginProgress) {
+		this.checkinginProgress = checkinginProgress;
+	}
+
 	/**
 	 * Сбрасывает состояние в "исходное"
 	 */
@@ -220,6 +232,7 @@ public class LoadStatus {
 		totalFilesToProcess = 0;
 		currentFileToProcess = 0;
 		wasErrorOnLoad = false;
+		checkinginProgress = false;
 	}
 
 }

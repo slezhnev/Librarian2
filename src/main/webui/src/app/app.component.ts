@@ -16,6 +16,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { catchError } from 'rxjs';
 import { Book, Author } from "./models"
 import { UserWrapper } from './user.service';
+import { MatGridListModule } from '@angular/material/grid-list';
+import { BooksUpdateStatusDialog } from './booksstatus.component'
 
 interface SearchTreeNode {
   name: string;
@@ -39,7 +41,7 @@ class SearchResult {
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, BookInfo, ReactiveFormsModule, MatRadioModule, FormsModule, MatInputModule, MatFormFieldModule, MatButtonModule,
-    MatListModule, MatTreeModule, MatIconModule, MatTreeNode, CommonModule, MatCheckboxModule],
+    MatListModule, MatTreeModule, MatIconModule, MatTreeNode, CommonModule, MatCheckboxModule, MatGridListModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -66,12 +68,14 @@ export class AppComponent {
 
   searchResultType: string = this.searchType;
 
-  progressSpinner: ProgressSpinner = new ProgressSpinner();
+  readonly progressSpinner: ProgressSpinner = new ProgressSpinner();
+
+  readonly statusDialog: BooksUpdateStatusDialog = new BooksUpdateStatusDialog();
 
   isSearchTypeBooks(): boolean {
     if (this.searchType === 'Books') {
       this.searchTypeParam = 'All'
-      return true;      
+      return true;
     } else {
       return false;
     }
@@ -202,38 +206,38 @@ export class AppComponent {
           }
         })
       } else
-      if (this.searchResultType === 'Books') {
-        this.progressSpinner.openDialog();
-        this.http.get<Book>('/book/' + this.searchResultSelectedElement!.id + '/' + this.userWrapper.userId + '/'          
-        ).pipe(
-          catchError(error => {
-            console.error('Cannot get book for bookId "' + this.searchResultSelectedElement!.id + '" and userId:' + this.userWrapper.userId);
-            throw new Error('Cannot load book');
+        if (this.searchResultType === 'Books') {
+          this.progressSpinner.openDialog();
+          this.http.get<Book>('/book/' + this.searchResultSelectedElement!.id + '/' + this.userWrapper.userId + '/'
+          ).pipe(
+            catchError(error => {
+              console.error('Cannot get book for bookId "' + this.searchResultSelectedElement!.id + '" and userId:' + this.userWrapper.userId);
+              throw new Error('Cannot load book');
+            })
+          ).subscribe({
+            next: data => {
+              const sr = <SearchTreeNode>{
+                name: data.title!,
+                children: [],
+                bookId: data.bookId!,
+                readed: data.readed,
+                mustRead: data.mustRead,
+                deletedInLibrary: data.deletedInLibrary
+              };
+              this.dataSource = [sr];
+              this.progressSpinner.closeDialog();
+              this.treeLeafSelected(sr)
+            },
+            error: error => {
+              this.progressSpinner.closeDialog();
+              this.dataSource = [{ name: error.message, mustRead: true, deletedInLibrary: true }]
+            }
           })
-        ).subscribe({
-          next: data => {
-            const sr = <SearchTreeNode>{
-              name: data.title!,
-              children: [],
-              bookId: data.bookId!,
-              readed: data.readed,
-              mustRead: data.mustRead,
-              deletedInLibrary: data.deletedInLibrary
-            };
-            this.dataSource = [sr];
-            this.progressSpinner.closeDialog();
-            this.treeLeafSelected(sr)
-          },
-          error: error => {
-            this.progressSpinner.closeDialog();
-            this.dataSource = [{ name: error.message, mustRead: true, deletedInLibrary: true }]
-          }
-        })
-      }
+        }
   }
 
   processingStatus() {
-    alert("Book processing status")
+    this.statusDialog.openDialog();
   }
 
   activeNode: any;
@@ -289,7 +293,7 @@ export class AppComponent {
       temp = false;
     }
     this.http.get('/book/mustRead/' + node.bookId + '/' + this.userWrapper.userId, {
-      params: {mustRead: temp},
+      params: { mustRead: temp },
     }).pipe(
       catchError(error => {
         console.error('Cannot set MustRead mark for bookId: ' + node.bookId + ' and userId:' + this.userWrapper.userId);
@@ -302,7 +306,7 @@ export class AppComponent {
       error: error => {
       }
     })
-}
+  }
 
   selectAsReaded(node: SearchTreeNode) {
     let temp = true
@@ -310,7 +314,7 @@ export class AppComponent {
       temp = false;
     }
     this.http.get('/book/readed/' + node.bookId + '/' + this.userWrapper.userId, {
-      params: {readed: temp},
+      params: { readed: temp },
     }).pipe(
       catchError(error => {
         console.error('Cannot set Readed mark for bookId: ' + node.bookId + ' and userId:' + this.userWrapper.userId);

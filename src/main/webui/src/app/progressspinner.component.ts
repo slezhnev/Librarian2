@@ -1,11 +1,7 @@
 import { Component, inject } from '@angular/core';
 import {
     MatDialog,
-    MatDialogActions,
-    MatDialogClose,
-    MatDialogContent,
     MatDialogRef,
-    MatDialogTitle,
 } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
@@ -31,7 +27,7 @@ export class ProgressSpinner {
 
 
 @Component({
-    selector: 'progress-spinner-dialog',
+    selector: 'progressspinner-dialog',
     templateUrl: './progressspinner-dialog.html',
     styleUrls: ['./progressspinner-dialog.css'],
     imports: [MatProgressSpinnerModule]
