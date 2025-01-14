@@ -2,36 +2,38 @@ package ru.lsv.librarian2.library;
 
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.NotImplementedException;
+import org.jboss.logging.Logger;
+
+import jakarta.transaction.Transactional;
 import ru.lsv.librarian2.library.parsers.FileParserListener;
 import ru.lsv.librarian2.models.Book;
 import ru.lsv.librarian2.models.Library;
 
-/**
- * Шедулер обработки новых книг в библиотеках
- * 
- * @author s.lezhnev
- */
 public class LibrarySheduler {
 
-	/**
-	 * Шедулер
-	 */
+	private static final Logger LOG = Logger.getLogger(LibrarySheduler.class);
+
 	private static volatile ScheduledExecutorService scheduler = null;
+
+	private static volatile Future<?> inProgress = null;
 
 	/**
 	 * @return the scheduler
 	 */
-	public static synchronized ScheduledExecutorService getScheduler() {
-		if (scheduler == null) {
-			scheduler = Executors.newSingleThreadScheduledExecutor();
-			scheduler.scheduleWithFixedDelay(() -> {
-				service();
-			}, 0, 1, TimeUnit.DAYS);
+	public static synchronized void checkForNewBook() {
+		if (inProgress == null || inProgress.isDone()) {
+			LoadStatus.getInstance().setCheckinginProgress(true);
+			if (scheduler == null) {
+				scheduler = Executors.newSingleThreadScheduledExecutor();
+			}
 		}
-		return scheduler;
+		inProgress = scheduler.submit(() -> {
+			service();
+		});
 	}
 
 	/**
@@ -80,44 +82,71 @@ public class LibrarySheduler {
 			LoadStatus.getInstance().setSaveBooksMark();
 		}
 
+		@Override
+		public void checkingFinishedStartToProcess() {
+			LoadStatus.getInstance().setCheckinginProgress(false);
+		}
+
+	}
+
+	@Transactional
+	public static List<Library> getAllLibraries() {
+		return Library.listAll();
 	}
 
 	/**
 	 * Поиск новых книг в библиотеках
 	 */
 	public static void service() {
-		// Получаем ВСЕ библиотеки
-		List<Library> libraries = Library.listAll();
-		if (libraries != null) {
-			for (Library library : libraries) {
-				LibraryUtils.setCurrentLibrary(library);
-				// Смотрим тип библиотеки - ищем реализацию
-				LibraryRealization libRes = null;
-				switch (library.libraryKind) {
-					case 1 -> {
-						// Либрусек
-						libRes = new LibRusEcLibrary();
+		try {
+			// Получаем ВСЕ библиотеки
+			LOG.info("Getting libraries");
+			List<Library> libraries = getAllLibraries();
+			if (libraries != null) {
+				for (Library library : libraries) {
+					LibraryUtils.setCurrentLibrary(library);
+					// Смотрим тип библиотеки - ищем реализацию
+					LibraryRealization libRes = null;
+					switch (library.libraryKind) {
+						case 1 -> {
+							// Либрусек
+							LOG.info("Found Librusec library - got representation");
+							libRes = new LibRusEcLibrary();
+						}
+						case 2 -> {
+							LOG.error("Found Flibusta library - not implemented");
+							throw new NotImplementedException("Support of Flibusta library does not implemented");
+						}
+						default -> {
+							LOG.errorf("Invalid library kind - %d, name - %s, id - %d", library.libraryKind, library.name, library.libraryId);
+							throw new NotImplementedException("Library kind does not supported");
+						}
 					}
-					case 2 -> {
-					}
-					default -> {
-					}
-				}
-				if (libRes != null) {
-					// Что-то начинаем делать...
-					int res = libRes.IsNewBooksPresent();
-					if (res == 1) {
-						// Чота есть!
-						LibraryProcessingCallback callback = new LibraryProcessingCallback();
-						// Запущаем!
-						libRes.processNewBooks(callback, callback);
-						// В завершении - сбросим все в LoadStatus
-						LoadStatus.getInstance().clear();
-					} else if (res == -1) {
-						LoadStatus.getInstance().setWasErrorOnLoad(true);
+					if (libRes != null) {
+						// Что-то начинаем делать...
+						LOG.info("Trying to find a new books");
+						int res = libRes.IsNewBooksPresent();
+						if (res == 1) {
+							LOG.info("Found new book - start to process it");
+							// Чота есть!
+							LibraryProcessingCallback callback = new LibraryProcessingCallback();
+							// Запущаем!
+							libRes.processNewBooks(callback, callback);
+							// В завершении - сбросим все в LoadStatus
+							LoadStatus.getInstance().clear();
+						} else if (res == -1) {
+							LOG.error("Have a problem during new files processing");
+							LoadStatus.getInstance().setWasErrorOnLoad(true);
+						} else {
+							LOG.info("No new book found");
+						}
 					}
 				}
 			}
+		} catch (Throwable e) {
+			LOG.error("Got an exception", e);
+		} finally {
+			LoadStatus.getInstance().setCheckinginProgress(false);
 		}
 	}
 

@@ -42,4 +42,9 @@ public interface LibraryDiffListener {
 	 */
 	void fileProcessSavingBooks(String fileName);
 
+	/**
+	 * Checking process are finished - we're starting to process a new books
+	 */
+	void checkingFinishedStartToProcess();
+
 }

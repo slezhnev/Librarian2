@@ -91,6 +91,45 @@ public class CommonUtils {
 		} else {
 			return storagePath;
 		}
-
 	}
+
+	public static String overrideINPXPathIfNeeded(String inpxPath, Integer libraryId)
+			throws StoragePathOverrideException {
+		String storageOverrideFilename = System.getProperty("library.storagePath.override", "");
+		if (storageOverrideFilename != null && !storageOverrideFilename.isBlank()) {
+			LOG.infof(
+					"INPX path should be overwritten. Trying to find '%s'", storageOverrideFilename);
+			File spOverride = new File(storageOverrideFilename);
+			if (spOverride.exists()) {
+				Properties props = new Properties();
+				try (FileInputStream fis = new FileInputStream(spOverride)) {
+					props.load(new InputStreamReader(fis, Charset.forName("UTF-8")));
+				} catch (IOException ex) {
+					LOG.errorf(ex,
+							"INPX path should be overwritten. But got IOException while reading a file '%s'",
+							spOverride.getAbsolutePath());
+					throw new StoragePathOverrideException(ex, "Exception while reading override parameters file");
+				}
+				String newINPXPath = props.getProperty("library.inpxPath." + libraryId);
+				if (newINPXPath != null) {
+					LOG.infof("INPX path was overwritten from '%s' to '%s'",
+							inpxPath, newINPXPath);
+					return newINPXPath;
+				} else {
+					LOG.errorf(
+							"INPX path should be overwritten. But file '%s' does not contain needed key %s",
+							storageOverrideFilename, "library.inpxPath" + libraryId);
+					throw new StoragePathOverrideException("Cannot get override library location file");
+				}
+			} else {
+				LOG.errorf(
+						"INPX path should be overwritten. But file '%s' does not exists",
+						storageOverrideFilename);
+				throw new StoragePathOverrideException("Cannot find override configuration file");
+			}
+		} else {
+			return inpxPath;
+		}
+	}
+
 }

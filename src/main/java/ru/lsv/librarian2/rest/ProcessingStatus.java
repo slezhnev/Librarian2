@@ -5,6 +5,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import ru.lsv.librarian2.library.LibrarySheduler;
 import ru.lsv.librarian2.library.LoadStatus;
 
 public class ProcessingStatus extends Controller {
@@ -13,6 +14,7 @@ public class ProcessingStatus extends Controller {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)    
     public LoadStatus getProcessingStatus() {
+        LibrarySheduler.checkForNewBook();
         return LoadStatus.getInstance().clone();
     }
     

@@ -95,6 +95,6 @@ export class BooksStatusDialog implements OnInit {
     startCronJob() {
         this.cronJob = setInterval(() => {
             this.fetchStatus();
-        }, 30000); // Fetch status every 30 seconds
+        }, 10000); // Fetch status every 30 seconds
     }
 }

@@ -60,8 +60,8 @@ public class Author extends PanacheEntityBase {
 	@Transactional
 	public static Optional<Author> addIfNotExists(Author author, Library library) {
 		Optional<Author> existedAuthor = find(
-				"from Author where firstName = ?1 and middleName = ?2 and lastName = ?3 and library.library_id=?4",
-				author.firstName, author.middleName, author.lastName, library.libraryId).singleResultOptional();
+				"from Author where firstName = ?1 and middleName = ?2 and lastName = ?3 and library.libraryId=?4",
+				author.firstName, author.middleName, author.lastName, library.libraryId).firstResultOptional();
 		if (existedAuthor.isPresent()) {
 			return existedAuthor;
 		} else {

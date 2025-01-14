@@ -74,6 +74,7 @@ public class LoadStatus {
 		res.totalFilesToProcess = this.totalFilesToProcess;
 		res.currentLibrary = this.currentLibrary;
 		res.wasErrorOnLoad = this.wasErrorOnLoad;
+		res.checkinginProgress = this.checkinginProgress;
 		return res;
 	}
 
@@ -202,22 +203,22 @@ public class LoadStatus {
 	/**
 	 * @return the wasErrorOnLoad
 	 */
-	public boolean isWasErrorOnLoad() {
+	public synchronized boolean isWasErrorOnLoad() {
 		return wasErrorOnLoad;
 	}
 
 	/**
 	 * @param wasErrorOnLoad the wasErrorOnLoad to set
 	 */
-	public void setWasErrorOnLoad(boolean wasErrorOnLoad) {
+	public synchronized void setWasErrorOnLoad(boolean wasErrorOnLoad) {
 		this.wasErrorOnLoad = wasErrorOnLoad;
 	}
 
-	public boolean isCheckinginProgress() {
+	public synchronized  boolean isCheckinginProgress() {
 		return checkinginProgress;
 	}
 
-	public void setCheckinginProgress(boolean checkinginProgress) {
+	public synchronized void setCheckinginProgress(boolean checkinginProgress) {
 		this.checkinginProgress = checkinginProgress;
 	}
 

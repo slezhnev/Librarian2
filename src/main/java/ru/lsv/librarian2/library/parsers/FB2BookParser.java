@@ -2,6 +2,7 @@ package ru.lsv.librarian2.library.parsers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Optional;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -168,8 +169,12 @@ public class FB2BookParser extends DefaultHandler {
 				// Дополнительно уже прямо тут будем обрабатывать сохранение в
 				// DB!
 				Optional<Author> addedAuthor = Author.addIfNotExists(tempAuthor, LibraryUtils.getCurrentLibrary());
-				if (addedAuthor.isPresent())
+				if (addedAuthor.isPresent()) {
+					if (tempBook.authors == null) {
+						tempBook.authors = new ArrayList<>();
+					}
 					tempBook.authors.add(addedAuthor.get());
+				}
 				tempAuthor = null;
 			}
 		} else if (qName.equalsIgnoreCase("book-title")) {

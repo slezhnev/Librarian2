@@ -12,6 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.transaction.Transactional;
 
 @Entity
 @Cacheable
@@ -39,10 +40,12 @@ public class FileEntity extends PanacheEntityBase {
 	@JoinColumn(name = "library_id")
 	public Library library;
 
+	@Transactional
 	public static Stream<FileEntity> getEntitiesAsStream(Integer libId) {
 		return stream("from FileEntity fe join fe.library l where l.libraryId = ?1", libId);
 	}
 
+	@Transactional
 	public static List<FileEntity> getEntities(Integer libId) {
 		return getEntitiesAsStream(libId).collect(Collectors.toList());
 	}
