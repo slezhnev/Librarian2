@@ -1,5 +1,7 @@
 package ru.lsv.librarian2.library;
 
+import java.util.concurrent.Future;
+
 /**
  * Статус загрузки книг в библиотеку
  * 
@@ -39,6 +41,13 @@ public class LoadStatus {
 	 * Mark that checking was started, but not yet finished
 	 */
 	private boolean checkinginProgress = false;
+
+	/**
+	 * Used in LibrarySheduler to execute only one new books check at the same time
+	 */
+	private volatile Future<?> inProgress = null;
+
+
 
 	/**
 	 * Hide constructor
@@ -235,5 +244,15 @@ public class LoadStatus {
 		wasErrorOnLoad = false;
 		checkinginProgress = false;
 	}
+
+	public synchronized Future<?> getInProgress() {
+		return inProgress;
+	}
+
+	public synchronized void setInProgress(Future<?> inProgress) {
+		this.inProgress = inProgress;
+	}
+
+	
 
 }

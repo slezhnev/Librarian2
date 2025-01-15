@@ -72,11 +72,11 @@ export class BooksStatusDialog implements OnInit {
                 } else
                     if (data.totalArcsToProcess && data.totalArcsToProcess > 0) {
                         this.libraryStatus = "Processing " + data.currentLibrary;
-                        this.filesStatus = "Processing " + data.currentArcName + " (" + data.currentArcsToProcess + "of " + data.totalArcsToProcess + ")";
+                        this.filesStatus = "Processing " + data.currentArcName + " (" + data.currentArcsToProcess + " of " + data.totalArcsToProcess + ")";
                         if (data.currentFileToProcess && data.totalFilesToProcess && data.currentFileToProcess > data.totalFilesToProcess) {
                             this.booksStatus = "Saving books in progress...";
                         } else {
-                            this.booksStatus = "Processing in archive " + data.currentFileToProcess + " of total " + data.totalFilesToProcess + ")";
+                            this.booksStatus = "Processing in archive " + data.currentFileToProcess + " of total " + data.totalFilesToProcess;
                         }
                     } else {
                         this.libraryStatus = "No new book in processing at this moment";

@@ -3,21 +3,26 @@ package ru.lsv.librarian2.library;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.reactive.RestResponse.ResponseBuilder;
 
+import io.quarkus.narayana.jta.runtime.TransactionConfiguration;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import ru.lsv.librarian2.library.parsers.FB2ZipFileParser;
 import ru.lsv.librarian2.library.parsers.FileParserListener;
 import ru.lsv.librarian2.library.parsers.INPRecord;
 import ru.lsv.librarian2.library.parsers.INPXParser;
+import ru.lsv.librarian2.models.Author;
 import ru.lsv.librarian2.models.Book;
 import ru.lsv.librarian2.models.FileEntity;
 import ru.lsv.librarian2.models.Library;
@@ -27,9 +32,13 @@ import ru.lsv.librarian2.util.CommonUtils.StoragePathOverrideException;
 /**
  * lib.rus.ec (in torrent format) support
  */
+@ApplicationScoped
 public class LibRusEcLibrary implements LibraryRealization {
 
 	private final Logger LOG = Logger.getLogger(LibRusEcLibrary.class);
+
+	@Inject
+	private LibraryUtils utils;
 
 	/**
 	 * см. {@link ru.lsv.lib.library.LibraryRealization}
@@ -37,6 +46,7 @@ public class LibRusEcLibrary implements LibraryRealization {
 	 * @return см. {@link ru.lsv.lib.library.LibraryRealization}
 	 */
 	@Override
+	@Transactional
 	public int IsNewBooksPresent() {
 		List<String> newFiles = getFilesDiff();
 		if (newFiles == null)
@@ -52,11 +62,11 @@ public class LibRusEcLibrary implements LibraryRealization {
 	 */
 	private List<String> getFilesDiff() {
 		List<String> newFiles;
-		if (LibraryUtils.getCurrentLibrary() == null) {
+		if (utils.getCurrentLibrary() == null) {
 			LOG.error("Current library does not set - reporting no new book");
 			return null;
 		}
-		Library library = LibraryUtils.getCurrentLibrary();
+		Library library = utils.getCurrentLibrary();
 		// Get file list in folder
 		String storagePath;
 		try {
@@ -85,7 +95,7 @@ public class LibRusEcLibrary implements LibraryRealization {
 		List<String> files = Arrays.asList(fileArray);
 		// We cannot filter at this place - we should process the library case, it
 		// should not contain any file
-		Set<String> libFiles = FileEntity.getEntities(LibraryUtils.getCurrentLibrary().libraryId).stream()
+		Set<String> libFiles = FileEntity.getEntities(library.libraryId).stream()
 				.map(el -> el.name).collect(Collectors.toSet());
 		if (libFiles.size() == 0) {
 			LOG.infof("[libId: %d] Library does not contain any files - assume all files as new",
@@ -114,11 +124,11 @@ public class LibRusEcLibrary implements LibraryRealization {
 	 */
 	@Override
 	public int processNewBooks(LibraryDiffListener diffListener, FileParserListener fileListener) {
-		if (LibraryUtils.getCurrentLibrary() == null) {
+		if (utils.getCurrentLibrary() == null) {
 			LOG.error("Current library does not set - nothing to process");
 			return -1;
 		}
-		Library library = LibraryUtils.getCurrentLibrary();
+		Library library = utils.getCurrentLibrary();
 		// Поехали получать дифф
 		List<String> newFiles = getFilesDiff();
 		if (newFiles == null) {
@@ -171,7 +181,7 @@ public class LibRusEcLibrary implements LibraryRealization {
 					diffListener.beginNewFile(file);
 				// Формируем список книг
 				File fl = new File(storagePath + File.separatorChar + file);
-				List<Book> books = zipParser.parseZipFile(storagePath + File.separatorChar + file, inpRecords);
+				List<Book> books = zipParser.parseZipFile(storagePath + File.separatorChar + file, inpRecords, library);
 				LOG.infof("[libId: %d] Processing %s - total books: %d", library.libraryId, file, books.size());
 				// Сохраняем
 				// Дата и время добавления. Для одного диффа - оно одинаково
@@ -183,22 +193,39 @@ public class LibRusEcLibrary implements LibraryRealization {
 				fe.name = file;
 				fe.size = fl.length();
 				fe.library = library;
-				persistBooksAndFileEntity(books, fe);
+				storeBooksAndFileEntity(books, fe);
 			} catch (Exception e) {
 				if (diffListener != null)
 					diffListener.fileProcessFailed(file, e.getMessage());
 				LOG.errorf(e, "[libId: %d] Got an exception while processing %s", library.libraryId, file);
+				hasFailed = true;
 			}
 		}
 		return hasFailed ? -2 : 0;
 	}
 
 	@Transactional
-	private void persistBooksAndFileEntity(List<Book> books, FileEntity fe) {
+	@TransactionConfiguration(timeout = 600)
+	public void storeBooksAndFileEntity(List<Book> books, FileEntity fe) {
+		Library library = utils.getCurrentLibrary();
 		Book.persist(books.stream().map(el -> {
 			el.addTime = new java.sql.Date(new Date().getTime());
+			el.authors = el.authors.stream().map(author -> {
+				if (author.authorId != null) {
+					return Author.findById(author.authorId);
+				} else {
+					Optional<Author> tmpAuthor = Author.addIfNotExists(author, library);
+					if (tmpAuthor.isPresent()) {
+						return tmpAuthor.get();
+					} else {
+						author.authorId = null;
+						return author;
+					}				
+				}
+			}).collect(Collectors.toList());
 			return el;
 		}));
 		fe.persist();
 	}
+
 }

@@ -8,32 +8,38 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.apache.commons.lang3.NotImplementedException;
 import org.jboss.logging.Logger;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import ru.lsv.librarian2.library.parsers.FileParserListener;
 import ru.lsv.librarian2.models.Book;
 import ru.lsv.librarian2.models.Library;
 
+@ApplicationScoped
 public class LibrarySheduler {
 
-	private static final Logger LOG = Logger.getLogger(LibrarySheduler.class);
+	private final Logger LOG = Logger.getLogger(LibrarySheduler.class);
 
-	private static volatile ScheduledExecutorService scheduler = null;
+	private volatile ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-	private static volatile Future<?> inProgress = null;
+	@Inject
+	private LibRusEcLibrary libRusEcImplementation;
+
+	@Inject
+	private LibraryUtils utils;
 
 	/**
 	 * @return the scheduler
 	 */
-	public static synchronized void checkForNewBook() {
-		if (inProgress == null || inProgress.isDone()) {
+	public synchronized void checkForNewBook() {
+		//TODO Add timeout between scans!
+		if (LoadStatus.getInstance().getInProgress() == null || LoadStatus.getInstance().getInProgress().isDone()) {
+			LOG.info("Start new scan...");
 			LoadStatus.getInstance().setCheckinginProgress(true);
-			if (scheduler == null) {
-				scheduler = Executors.newSingleThreadScheduledExecutor();
-			}
+			LoadStatus.getInstance().setInProgress(scheduler.submit(() -> {
+				service();
+			}));
 		}
-		inProgress = scheduler.submit(() -> {
-			service();
-		});
 	}
 
 	/**
@@ -90,35 +96,36 @@ public class LibrarySheduler {
 	}
 
 	@Transactional
-	public static List<Library> getAllLibraries() {
+	public List<Library> getAllLibraries() {
 		return Library.listAll();
 	}
 
 	/**
 	 * Поиск новых книг в библиотеках
 	 */
-	public static void service() {
+	public void service() {
 		try {
 			// Получаем ВСЕ библиотеки
 			LOG.info("Getting libraries");
 			List<Library> libraries = getAllLibraries();
 			if (libraries != null) {
 				for (Library library : libraries) {
-					LibraryUtils.setCurrentLibrary(library);
+					utils.setCurrentLibrary(library);
 					// Смотрим тип библиотеки - ищем реализацию
 					LibraryRealization libRes = null;
 					switch (library.libraryKind) {
 						case 1 -> {
 							// Либрусек
 							LOG.info("Found Librusec library - got representation");
-							libRes = new LibRusEcLibrary();
+							libRes = libRusEcImplementation;
 						}
 						case 2 -> {
 							LOG.error("Found Flibusta library - not implemented");
 							throw new NotImplementedException("Support of Flibusta library does not implemented");
 						}
 						default -> {
-							LOG.errorf("Invalid library kind - %d, name - %s, id - %d", library.libraryKind, library.name, library.libraryId);
+							LOG.errorf("Invalid library kind - %d, name - %s, id - %d", library.libraryKind,
+									library.name, library.libraryId);
 							throw new NotImplementedException("Library kind does not supported");
 						}
 					}

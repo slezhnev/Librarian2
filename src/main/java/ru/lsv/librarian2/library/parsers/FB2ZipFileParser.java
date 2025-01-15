@@ -3,6 +3,7 @@ package ru.lsv.librarian2.library.parsers;
 import org.xml.sax.SAXException;
 
 import ru.lsv.librarian2.models.Book;
+import ru.lsv.librarian2.models.Library;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
@@ -28,7 +29,7 @@ public class FB2ZipFileParser {
 	 * Добавление листенера
 	 * 
 	 * @param listener
-	 *            листенер
+	 *                 листенер
 	 */
 	public void addListener(FileParserListener listener) {
 		if (listener != null)
@@ -39,7 +40,7 @@ public class FB2ZipFileParser {
 	 * Удаление листенера
 	 * 
 	 * @param listener
-	 *            листенер
+	 *                 листенер
 	 */
 	public void removeListener(FileParserListener listener) {
 		listeners.remove(listener);
@@ -51,20 +52,22 @@ public class FB2ZipFileParser {
 	 * сохранен в базу
 	 * 
 	 * @param pathToFile
-	 *            Имя файла архива для обработки
+	 *                   Имя файла архива для обработки
 	 * @param inpRecords
-	 *            Список записей inp из INPX файла (может быть null) <br/>
-	 *            Если есть - то данные по книге будут пытаться браться из него
+	 *                   Список записей inp из INPX файла (может быть null) <br/>
+	 *                   Если есть - то данные по книге будут пытаться браться из
+	 *                   него
 	 * @return Сформированный список книг в этом архиве
 	 * @throws IOException
-	 *             В случае проблем с чтением архива
+	 *                                  В случае проблем с чтением архива
 	 * @throws java.text.ParseException
-	 *             В случае, если возникают проболемы с парсингом имени файла в
-	 *             архиве или самой книги
+	 *                                  В случае, если возникают проболемы с
+	 *                                  парсингом имени файла в
+	 *                                  архиве или самой книги
 	 */
 	@SuppressWarnings({ "rawtypes", "resource" })
 	public List<Book> parseZipFile(String pathToFile,
-			Map<String, INPRecord> inpRecords) throws IOException,
+			Map<String, INPRecord> inpRecords, Library library) throws IOException,
 			ParseException {
 		ZipFile zip = new ZipFile(pathToFile);
 		int totalFiles = 0;
@@ -98,22 +101,22 @@ public class FB2ZipFileParser {
 						book.zipFileName = fileName;
 						book.crc32 = ze.getCrc();
 						// Заполняем параметры книги
-						book = inpRecords.get(id).fillBookFrom(book);
+						book = inpRecords.get(id).fillBookFrom(book, library);
 					} else {
 						// Парсим книгу
 						book = bp.parseFB2Stream(zip.getInputStream(ze), id,
-								fileName, ze.getCrc());
+								fileName, ze.getCrc(), library);
 					}
-					if (book != null)
+					if (book != null) {
 						res.add(book);
-					else {
+						// Поехали отфигарим по листенерам
+						for (FileParserListener listener : listeners) {
+							listener.inArchiveFileProcessed(name, book);
+						}
+					} else {
 						for (FileParserListener listener : listeners) {
 							listener.inArchiveFileParseFailed(name);
 						}
-					}
-					// Поехали отфигарим по листенерам
-					for (FileParserListener listener : listeners) {
-						listener.inArchiveFileProcessed(name, book);
 					}
 				} catch (SAXException e1) {
 					for (FileParserListener listener : listeners) {

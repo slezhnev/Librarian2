@@ -8,6 +8,7 @@ import ru.lsv.librarian2.library.LibraryUtils;
 import ru.lsv.librarian2.models.Author;
 import ru.lsv.librarian2.models.Book;
 //import ru.lsv.librarian2.library.LibraryUtils;
+import ru.lsv.librarian2.models.Library;
 
 /**
  * Парсер одной строки в INP-файле, который содержится в INPX <br/>
@@ -223,7 +224,7 @@ public class INPRecord {
      * @param book Книга, которую заполнять
      * @return Заполненная из текущей записи книга
      */
-    public Book fillBookFrom(final Book book) {
+    public Book fillBookFrom(final Book book, final Library library) {
         book.title = getTitle();
         book.serieName = getSerie();
         Integer numInSerie;
@@ -245,7 +246,7 @@ public class INPRecord {
             // Фамилия
             author.lastName = inpAuthor.getFamily();
             // Ищем такое в БД
-            Optional<Author> addedAuthor = Author.addIfNotExists(author, LibraryUtils.getCurrentLibrary());
+            Optional<Author> addedAuthor = Author.addIfNotExists(author, library);
             if (addedAuthor.isPresent()) {
                 tempAuthors.add(addedAuthor.get());
             }

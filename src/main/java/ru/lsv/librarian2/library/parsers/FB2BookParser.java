@@ -9,13 +9,15 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.jboss.logging.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import ru.lsv.librarian2.library.LibRusEcLibrary;
 import ru.lsv.librarian2.models.Author;
 import ru.lsv.librarian2.models.Book;
-import ru.lsv.librarian2.library.LibraryUtils;
+import ru.lsv.librarian2.models.Library;
 
 /**
  * Copied from Librrian.GWT
@@ -28,6 +30,8 @@ import ru.lsv.librarian2.library.LibraryUtils;
 @SuppressWarnings({})
 public class FB2BookParser extends DefaultHandler {
 
+	private final Logger LOG = Logger.getLogger(FB2BookParser.class);
+
 	private String tempVal;
 	private Book tempBook = null;
 	private Book retBook = null;
@@ -37,25 +41,26 @@ public class FB2BookParser extends DefaultHandler {
 	 * Парсит fr2-книгу из входного потока
 	 * 
 	 * @param inStream
-	 *            Входной поток с книгой
+	 *                    Входной поток с книгой
 	 * @param id
-	 *            ID книги в библиотеке
+	 *                    ID книги в библиотеке
 	 * @param zipFileName
-	 *            Bмя ZIPфайла с книгой в библиотеке
+	 *                    Bмя ZIPфайла с книгой в библиотеке
 	 * @param crc32
-	 *            CRC32 книги (для удаления дублей)
+	 *                    CRC32 книги (для удаления дублей)
 	 * @return Сформированный экземпляр book или null в случае каких-либо
 	 *         проблем с парсингом
 	 * @throws SAXException
-	 *             В случае ошибок парсинга книги (к примеру - во входной потоке
-	 *             неверно сформированный fb2)
+	 *                                      В случае ошибок парсинга книги (к
+	 *                                      примеру - во входной потоке
+	 *                                      неверно сформированный fb2)
 	 * @throws ParserConfigurationException
-	 *             В случае отсутствия SAX парсера
+	 *                                      В случае отсутствия SAX парсера
 	 * @throws IOException
-	 *             В случае проблем чтения из потока
+	 *                                      В случае проблем чтения из потока
 	 */
 	public Book parseFB2Stream(InputStream inStream, String id,
-			String zipFileName, long crc32) throws SAXException,
+			String zipFileName, long crc32, Library library) throws SAXException,
 			ParserConfigurationException, IOException {
 		// Вначале читаем все в StringBuffer. Читаем ВСЕ до </description>
 		/*
@@ -77,9 +82,16 @@ public class FB2BookParser extends DefaultHandler {
 		// parser.parse(new InputSource(new StringReader(str.toString())),
 		// this);
 		if (retBook != null) {
+			if (retBook.title == null || retBook.title.isBlank()) {
+				// It is not a valid book - it does not contain a title
+				LOG.errorf("Book after parsing does not contain a title! id - %s, zip - %s", id, zipFileName);
+				return null;
+			}
 			retBook.id = id;
 			retBook.zipFileName = zipFileName;
 			retBook.crc32 = crc32;
+			if (retBook.genre == null || retBook.genre.isBlank())
+				retBook.genre = "";
 		}
 		return retBook;
 	}
@@ -88,15 +100,15 @@ public class FB2BookParser extends DefaultHandler {
 	 * См. @org.xml.sax.helpers.DefaultHandler
 	 * 
 	 * @param uri
-	 *            См. {@link org.xml.sax.helpers.DefaultHandler}
+	 *                   См. {@link org.xml.sax.helpers.DefaultHandler}
 	 * @param localName
-	 *            См. {@link org.xml.sax.helpers.DefaultHandler}
+	 *                   См. {@link org.xml.sax.helpers.DefaultHandler}
 	 * @param qName
-	 *            См. {@link org.xml.sax.helpers.DefaultHandler}
+	 *                   См. {@link org.xml.sax.helpers.DefaultHandler}
 	 * @param attributes
-	 *            См. {@link org.xml.sax.helpers.DefaultHandler}
+	 *                   См. {@link org.xml.sax.helpers.DefaultHandler}
 	 * @throws SAXException
-	 *             См. {@link org.xml.sax.helpers.DefaultHandler}
+	 *                      См. {@link org.xml.sax.helpers.DefaultHandler}
 	 */
 	public void startElement(String uri, String localName, String qName,
 			Attributes attributes) throws SAXException {
@@ -122,13 +134,13 @@ public class FB2BookParser extends DefaultHandler {
 	 * См. @org.xml.sax.helpers.DefaultHandler
 	 * 
 	 * @param ch
-	 *            См. @org.xml.sax.helpers.DefaultHandler
+	 *               См. @org.xml.sax.helpers.DefaultHandler
 	 * @param start
-	 *            См. @org.xml.sax.helpers.DefaultHandler
+	 *               См. @org.xml.sax.helpers.DefaultHandler
 	 * @param length
-	 *            См. @org.xml.sax.helpers.DefaultHandler
+	 *               См. @org.xml.sax.helpers.DefaultHandler
 	 * @throws SAXException
-	 *             См. @org.xml.sax.helpers.DefaultHandler
+	 *                      См. @org.xml.sax.helpers.DefaultHandler
 	 */
 	public void characters(char[] ch, int start, int length)
 			throws SAXException {
@@ -139,13 +151,13 @@ public class FB2BookParser extends DefaultHandler {
 	 * См. @org.xml.sax.helpers.DefaultHandler
 	 * 
 	 * @param uri
-	 *            См. @org.xml.sax.helpers.DefaultHandler
+	 *                  См. @org.xml.sax.helpers.DefaultHandler
 	 * @param localName
-	 *            См. @org.xml.sax.helpers.DefaultHandler
+	 *                  См. @org.xml.sax.helpers.DefaultHandler
 	 * @param qName
-	 *            См. @org.xml.sax.helpers.DefaultHandler
+	 *                  См. @org.xml.sax.helpers.DefaultHandler
 	 * @throws SAXException
-	 *             См. @org.xml.sax.helpers.DefaultHandler
+	 *                      См. @org.xml.sax.helpers.DefaultHandler
 	 */
 	public void endElement(String uri, String localName, String qName)
 			throws SAXException {
@@ -168,13 +180,18 @@ public class FB2BookParser extends DefaultHandler {
 			if (tempBook != null) {
 				// Дополнительно уже прямо тут будем обрабатывать сохранение в
 				// DB!
-				Optional<Author> addedAuthor = Author.addIfNotExists(tempAuthor, LibraryUtils.getCurrentLibrary());
-				if (addedAuthor.isPresent()) {
-					if (tempBook.authors == null) {
-						tempBook.authors = new ArrayList<>();
-					}
-					tempBook.authors.add(addedAuthor.get());
+				if (tempBook.authors == null) {
+					tempBook.authors = new ArrayList<>();
 				}
+				tempBook.authors.add(tempAuthor);
+				// Optional<Author> addedAuthor = Author.addIfNotExists(tempAuthor,
+				// currLibrary);
+				// if (addedAuthor.isPresent()) {
+				// if (tempBook.authors == null) {
+				// tempBook.authors = new ArrayList<>();
+				// }
+				// tempBook.authors.add(addedAuthor.get());
+				// }
 				tempAuthor = null;
 			}
 		} else if (qName.equalsIgnoreCase("book-title")) {
