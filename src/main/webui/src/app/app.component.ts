@@ -240,6 +240,10 @@ export class AppComponent {
     this.statusDialog.openDialog();
   }
 
+  downloadBooks() {
+    
+  }
+
   activeNode: any;
 
   childrenAccessor = (node: SearchTreeNode) => node.children ?? [];

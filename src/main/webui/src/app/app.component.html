@@ -36,7 +36,10 @@
     </div>
   </div>
   <div id="w-node-f0d3bee8-7a2a-0c6f-9f1a-9b5a63c03de5-dae3a695" class="w-layout-cell">
-    <button mat-flat-button (click)="processingStatus()" class="processingstatus">Books processing status</button>
+    <div class="buttonspanel">
+      <button mat-flat-button (click)="processingStatus()" class="processingstatus">Books processing status</button>
+      <button mat-flat-button (click)="downloadBooks()" class="downloadBooks">Download books</button>
+    </div>
     <div class="w-layout-grid grid">
       <div class="treewrapper">
         <mat-tree #tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor" class="bookstree">

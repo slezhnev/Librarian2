@@ -239,6 +239,15 @@ public class Book extends PanacheEntityBase {
 		return list("from Book where title like ?1", Sort.by("title"), CommonUtils.updateSearch(searchTitle));
 	}
 
+	public static long countToDownload(Integer userId) {
+		return count("from Book b join b.mustRead mr where mr.userId = ?1", userId);
+	}
+
+	public static List<Integer> searchToDownload(Integer userId) {
+		return find("select b.bookId from Book b join b.mustRead mr where mr.userId = ?1 order by b.title, b.crc32",
+				userId).project(Integer.class).list();
+	}
+
 	@Override
 	public String toString() {
 		return this.getClass().getSimpleName() + "<" + bookId + ">";
@@ -247,6 +256,20 @@ public class Book extends PanacheEntityBase {
 
 	public String titleWithSerie() {
 		if (serieName != null && !serieName.isBlank()) {
+			return String.format("%s (%s - %d)", this.title, this.serieName, this.numInSerie);
+		} else {
+			return this.title;
+		}
+	}
+
+	public String titleWithSerieAndAuthor() {
+		String author = null;
+		if (authors != null && !authors.isEmpty()) {
+			author = String.format("%s %s", authors.getFirst().lastName, authors.getFirst().firstName);
+		}
+		if (serieName != null && !serieName.isBlank() && author != null) {
+			return String.format("%s %s (%s - %d)", author, this.title, this.serieName, this.numInSerie);
+		} else if (serieName != null && !serieName.isBlank() && author != null) {
 			return String.format("%s (%s - %d)", this.title, this.serieName, this.numInSerie);
 		} else {
 			return this.title;

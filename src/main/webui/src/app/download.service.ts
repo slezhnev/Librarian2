@@ -9,7 +9,7 @@ export class DownloadService {
 	userWrapper = inject(UserWrapper)
 
 	downloadBook(bookId: number, downloadType: number) {
-		window.open("/download/" +bookId + "/" + downloadType + "/" + this.userWrapper.userId, "_blank");		
+		window.open("/download/book/" +bookId + "/" + downloadType + "/" + this.userWrapper.userId, "_blank");		
 	}
 	
 }

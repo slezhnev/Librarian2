@@ -1,5 +1,7 @@
 package ru.lsv.librarian2.library;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -29,16 +31,23 @@ public class LibrarySheduler {
 	private LibraryUtils utils;
 
 	/**
+	 * Timeout between scans in minutes
+	 */
+	private final int timeoutBetweenScans = 1;
+
+	/**
 	 * @return the scheduler
 	 */
 	public synchronized void checkForNewBook() {
-		//TODO Add timeout between scans!
 		if (LoadStatus.getInstance().getInProgress() == null || LoadStatus.getInstance().getInProgress().isDone()) {
-			LOG.info("Start new scan...");
-			LoadStatus.getInstance().setCheckinginProgress(true);
-			LoadStatus.getInstance().setInProgress(scheduler.submit(() -> {
-				service();
-			}));
+			if (LoadStatus.getInstance().getLastAnalysisFinished() == null || Duration
+					.between(LoadStatus.getInstance().getLastAnalysisFinished(), LocalDateTime.now()).toMinutes() > timeoutBetweenScans) {
+				LOG.info("Start new scan...");
+				LoadStatus.getInstance().setCheckinginProgress(true);
+				LoadStatus.getInstance().setInProgress(scheduler.submit(() -> {
+					service();
+				}));
+			}
 		}
 	}
 
@@ -154,6 +163,7 @@ public class LibrarySheduler {
 			LOG.error("Got an exception", e);
 		} finally {
 			LoadStatus.getInstance().setCheckinginProgress(false);
+			LoadStatus.getInstance().setLastAnalysisFinished(LocalDateTime.now());
 		}
 	}
 

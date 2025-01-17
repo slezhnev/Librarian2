@@ -1,5 +1,7 @@
 package ru.lsv.librarian2.library;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.concurrent.Future;
 
 /**
@@ -46,6 +48,8 @@ public class LoadStatus {
 	 * Used in LibrarySheduler to execute only one new books check at the same time
 	 */
 	private volatile Future<?> inProgress = null;
+
+	private volatile LocalDateTime lastAnalysisFinished = null;
 
 
 
@@ -253,6 +257,15 @@ public class LoadStatus {
 		this.inProgress = inProgress;
 	}
 
+	public synchronized LocalDateTime getLastAnalysisFinished() {
+		return lastAnalysisFinished;
+	}
+
+	public synchronized void setLastAnalysisFinished(LocalDateTime lastAnalysisFinished) {
+		this.lastAnalysisFinished = lastAnalysisFinished;
+	}
+
+	
 	
 
 }
