@@ -18,6 +18,7 @@ import { Book, Author } from "./models"
 import { UserWrapper } from './user.service';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { BooksUpdateStatusDialog } from './booksstatus.component'
+import { BooksDownloadDialog } from './booksdownload.component'
 
 interface SearchTreeNode {
   name: string;
@@ -71,6 +72,7 @@ export class AppComponent {
   readonly progressSpinner: ProgressSpinner = new ProgressSpinner();
 
   readonly statusDialog: BooksUpdateStatusDialog = new BooksUpdateStatusDialog();
+  readonly downloadDialog: BooksDownloadDialog = new BooksDownloadDialog();
 
   isSearchTypeBooks(): boolean {
     if (this.searchType === 'Books') {
@@ -241,7 +243,7 @@ export class AppComponent {
   }
 
   downloadBooks() {
-    
+    this.downloadDialog.openDialog();    
   }
 
   activeNode: any;

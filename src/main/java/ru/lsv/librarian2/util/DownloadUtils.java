@@ -15,7 +15,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.reactive.RestResponse.ResponseBuilder;
 
 import ru.homyakin.iuliia.Schemas;
 import ru.homyakin.iuliia.Translator;
@@ -31,9 +30,14 @@ public class DownloadUtils {
 
     private static final String dirName = "librarian2";
 
-    public static File getBookFile(Book book, int downloadType, boolean finishMark) {
+    static {
+        new File(System.getProperty("java.io.tmpdir"), dirName).mkdirs();
+    }
+
+    public static Pair<File, File> getBookFiles(Book book, int downloadType) {
         File tmpDir = new File(System.getProperty("java.io.tmpdir"), dirName);
-        if (tmpDir.mkdirs()) {
+        tmpDir.deleteOnExit();
+        if (tmpDir.exists()) {
             String name = translator.translate(cleanFileName(book.titleWithSerieAndAuthor()));
             switch (downloadType) {
                 case 1 -> {
@@ -43,11 +47,12 @@ public class DownloadUtils {
                     name = name + ".fb2.zip";
                 }
             }
-            if (finishMark)
-                name = name + ".prepared";
+            String finishMarkName = name + ".prepared";
             File outputFile = new File(tmpDir, name);
+            File outputMarkFile = new File(tmpDir, finishMarkName);
             outputFile.deleteOnExit();
-            return outputFile;
+            outputMarkFile.deleteOnExit();
+            return Pair.of(outputFile, outputMarkFile);
         } else {
             return null;
         }
@@ -59,9 +64,39 @@ public class DownloadUtils {
         }
     };
 
-    public static File prepareFotDownload(Book book, int downloadType) throws DownloadPreparationException {
-        if (book.library == null) {
-            LOG.errorf("[bookId: %d] Book does not have a link to library", book.bookId);
+    /**
+     * Extract file from archive to temp location <br/>
+     * Method will create a two files (in temp location) with fixed names (@see
+     * ru.lsv.librarian2.util.DownloadUtils#getBookFile)
+     * 
+     * @param book         Book
+     * @param downloadType Download type: 1 - fb2.zip, otherwise - fb2
+     * @return Two files: book file and technical file, which indicates what book
+     *         file was fully extracted and prepared
+     * @throws DownloadPreparationException
+     *                                      Where a set of cases then it will be
+     *                                      thrown: <br/>
+     *                                      <ul>
+     *                                      <li>If book are null or does not have
+     *                                      library link</li>
+     *                                      <li>If we've got an error while trying
+     *                                      to overwrite the storage path (uncommon
+     *                                      case)</li>
+     *                                      <li>If arc library file does not
+     *                                      exists</li>
+     *                                      <li>If book file or techical "extracted"
+     *                                      in temp location already exists - this
+     *                                      case should be tested BEFORE call of
+     *                                      this method via getBookFile()</li>
+     *                                      <li>If we've got an exception while
+     *                                      extracting file from archive or while
+     *                                      creating book file or techical
+     *                                      "extracted" file</li>
+     *                                      </ul>
+     */
+    public static File prepareForDownload(Book book, int downloadType) throws DownloadPreparationException {
+        if (book == null || book.library == null) {
+            LOG.errorf("[bookId: %d] Book are null or does not have a link to library", book.bookId);
             throw new DownloadPreparationException("Book does not have a link to library");
         }
         String storagePath;
@@ -79,11 +114,9 @@ public class DownloadUtils {
         }
         LOG.infof("[bookId: %d] Found archive file in library - '%s'", book.bookId, storagePath);
 
-        String tempDir = System.getProperty("java.io.tmpdir");
-
-        // String outputFileName = getBookFileName(book, downloadType);
-        File tempOutputFile = getBookFile(book, downloadType, false);
-        File tempOutputFilePrepared = getBookFile(book, downloadType, true);
+        Pair<File, File> tempFiles = getBookFiles(book, downloadType);
+        File tempOutputFile = tempFiles.getLeft();
+        File tempOutputFilePrepared = tempFiles.getRight();
         try {
             if (!tempOutputFile.createNewFile() || tempOutputFilePrepared.exists()) {
                 LOG.errorf("[bookId: %d] Cannot create output file - it or '.prepared' file already exists",
@@ -95,6 +128,8 @@ public class DownloadUtils {
         } catch (IOException ex) {
             LOG.errorf(ex, "[bookId: %d] Exception while creation of output file", book.bookId,
                     tempOutputFile.getAbsolutePath());
+            tempOutputFile.delete();
+            tempOutputFilePrepared.delete();
             throw new DownloadPreparationException("Exception while creation of output file");
         }
 
