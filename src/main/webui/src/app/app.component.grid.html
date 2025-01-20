@@ -1,0 +1,57 @@
+<mat-grid-list cols="2" rowHeight="100%" class="mdl-first">
+    <mat-grid-tile>
+        <div class="mgt-first">
+            <div class="searchblock">
+                <div class="searchtype">
+                    <mat-radio-group class="searchtype-radio-group" [(ngModel)]="searchType">
+                        <mat-radio-button value="Authors" class="searchtype-radiobutton">Authors</mat-radio-button>
+                        <mat-radio-button value="Books" class="searchtype-radiobutton">Books</mat-radio-button>
+                        <mat-radio-button value="Series" class="searchtype-radiobutton">Series</mat-radio-button>
+                    </mat-radio-group>
+                    <mat-radio-group class="searchtype-param" [(ngModel)]="searchTypeParam"
+                        [disabled]="isSearchTypeBooks()">
+                        <mat-radio-button value="All" class="searchtype-radiobutton">all</mat-radio-button>
+                        <mat-radio-button value="Readed" class="searchtype-radiobutton">readed</mat-radio-button>
+                        <mat-radio-button value="NewBooks" class="searchtype-radiobutton">with new
+                            books</mat-radio-button>
+                    </mat-radio-group>
+                </div>
+                <div class="searchform">
+                    <form [formGroup]="searchForm" class="searchform" (ngSubmit)="handleSearch()">
+                        <mat-form-field class="searchform-edit">
+                            <mat-label>Author name, book title or series name</mat-label>
+                            <input matInput formControlName="searchEdit" [(ngModel)]="searchText" />
+                        </mat-form-field>
+                        <button mat-flat-button class="searchform-button" type="submit"
+                            [disabled]="!searchForm.valid">Search</button>
+                    </form>
+                </div>
+                <div class="searchresult">
+                    <div class="searchresult-type">{{searchResultType}}</div>
+                    <div class="searchresult-values">
+                        <mat-action-list name="searchResult" class="searchresult-mat-action-list">
+                            @for (sr of searchResult; track sr) {
+                            <button mat-list-item [value]="sr" (click)="searchResultSelected(sr)"
+                                [ngClass]="{ 'background-highlight': searchResultSelectedElement === sr }">{{sr.name}}</button>
+                            }
+                        </mat-action-list>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </mat-grid-tile>
+    <mat-grid-tile class="mgd-second">
+        <div class="mgt-second">
+            <div class="searchresultblock">
+                <div class="buttonspanel">
+                    <button mat-flat-button (click)="processingStatus()">Books processing status</button>
+                    <button mat-flat-button (click)="downloadBooks()">Download books</button>
+                </div>
+                <div class="searchtreeandinfo">
+                    <div>1</div>
+                    <div>2</div>
+                </div>
+            </div>
+        </div>
+    </mat-grid-tile>
+</mat-grid-list>

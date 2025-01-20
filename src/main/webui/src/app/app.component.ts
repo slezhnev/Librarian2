@@ -43,8 +43,8 @@ class SearchResult {
   selector: 'app-root',
   imports: [RouterOutlet, BookInfo, ReactiveFormsModule, MatRadioModule, FormsModule, MatInputModule, MatFormFieldModule, MatButtonModule,
     MatListModule, MatTreeModule, MatIconModule, MatTreeNode, CommonModule, MatCheckboxModule, MatGridListModule],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css',
+  templateUrl: './app.component.grid.html',
+  styleUrl: './app.component.grid.css',
 })
 
 export class AppComponent {
