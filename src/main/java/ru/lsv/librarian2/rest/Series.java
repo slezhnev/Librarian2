@@ -6,6 +6,7 @@ import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.RestQuery;
 
 import io.quarkiverse.renarde.Controller;
+import io.quarkus.security.Authenticated;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -18,6 +19,7 @@ public class Series extends Controller {
 	@Path("/series")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
+	@Authenticated
 	public List<String> getSeries(@RestQuery String serieName) {
 		return Book.searchBySerie(serieName);
 	}

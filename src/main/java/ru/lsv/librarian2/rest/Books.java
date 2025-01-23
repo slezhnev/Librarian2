@@ -14,6 +14,7 @@ import org.jboss.resteasy.reactive.RestResponse;
 import org.jboss.resteasy.reactive.RestResponse.ResponseBuilder;
 
 import io.quarkiverse.renarde.Controller;
+import io.quarkus.security.Authenticated;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Path;
 import ru.lsv.librarian2.models.Book;
@@ -109,6 +110,7 @@ public class Books extends Controller {
 	}
 
 	@Path("/books/byTitle")
+	@Authenticated
 	public List<BookView> getByTitle(@RestQuery String title) {
 		return Book.searchByTitle(title).stream().map(BOOK_MAPPER).collect(Collectors.toList());
 	}

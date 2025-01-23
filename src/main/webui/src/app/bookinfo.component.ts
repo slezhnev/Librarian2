@@ -1,6 +1,6 @@
 import { Component, inject, Input, Output, EventEmitter } from '@angular/core';
-import { DownloadService } from "./download.service"
-import { Book, Author } from "./models"
+import { DownloadService } from "./services/download.service"
+import { Book, Author } from "./models/models"
 import { AuthorLink } from './authorlink.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';

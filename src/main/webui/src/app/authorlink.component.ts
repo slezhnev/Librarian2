@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { Book, Author} from "./models"
+import { Book, Author} from "./models/models"
 import {MatButtonModule} from '@angular/material/button';
 
 @Component({

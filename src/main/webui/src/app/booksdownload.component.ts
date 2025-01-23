@@ -9,7 +9,7 @@ import {
 } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { catchError } from 'rxjs';
-import { DownloadService } from './download.service';
+import { DownloadService } from './services/download.service';
 
 @Component({
     selector: 'booksdownload',

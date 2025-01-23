@@ -46,6 +46,9 @@
                 <div class="buttonspanel">
                     <button mat-flat-button (click)="processingStatus()">Books processing status</button>
                     <button mat-flat-button (click)="downloadBooks()">Download books</button>
+                    <div class="logoutbuttonpanel">
+                        <button mat-flat-button (click)="logout()">Logout</button>
+                    </div>
                 </div>
                 <div class="searchtreeandinfo">
                     <div class="treewrapper">
@@ -72,10 +75,12 @@
                     </div>
                     <div class="bookwrapper">
                         <bookinfo [book]="bookInfo" (switchToAuthorEvent)="switchToAuthor($event)"
-                            (switchToSerieEvent)="switchToSerie($event)" class="bookinfo"/>
+                            (switchToSerieEvent)="switchToSerie($event)" class="bookinfo" />
                     </div>
                 </div>
             </div>
         </div>
     </mat-grid-tile>
 </mat-grid-list>
+
+<router-outlet />

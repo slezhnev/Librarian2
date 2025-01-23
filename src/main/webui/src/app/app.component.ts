@@ -14,11 +14,12 @@ import { ProgressSpinner } from './progressspinner.component';
 import { HttpClient } from '@angular/common/http';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { catchError } from 'rxjs';
-import { Book, Author } from "./models"
+import { Book, Author } from "./models/models"
 import { UserWrapper } from './user.service';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { BooksUpdateStatusDialog } from './booksstatus.component'
 import { BooksDownloadDialog } from './booksdownload.component'
+import Keycloak from 'keycloak-js';
 
 interface SearchTreeNode {
   name: string;
@@ -54,6 +55,12 @@ export class AppComponent {
   title = 'librarian2';
 
   readonly http: HttpClient = inject(HttpClient)
+
+  private readonly keycloak = inject(Keycloak);
+
+  logout() {
+    this.keycloak.logout();
+  }
 
   searchType: string = "Books";
 
