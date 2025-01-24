@@ -15,7 +15,7 @@ export const provideKeycloakAngular = () =>
     config: {
       url: 'http://keycloak.192.168.8.4.nip.io',
       realm: 'librarian2',
-      clientId: 'librarian2'
+      clientId: 'librarian2-frontend'
     },
     initOptions: {
       onLoad: 'login-required',

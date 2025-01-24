@@ -80,12 +80,22 @@ microk8s config > config
 7. Install KeyCloak
 * Create Namespace
 `kubectl create namespace keycloak`
+* Create PostgreSQL DB with name "keycloak", user "keycloak" with password and grant all rights to it over newly created database (`GRANT ALL ON DATABASE keycloak TO keycloak;`)
+* Create secret "db-password" with key "password" to store access DB password (created above)
 * Create KeyCloak deployment
-`kubectl create -n keycloak -f https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/refs/heads/main/kubernetes/keycloak.yaml`
+`kubectl create -n keycloak -f keycloak.yaml` (taken from https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/refs/heads/main/kubernetes/keycloak.yaml)
 * Create KeyCloak ingress
 `kubectl apply -f keycloak-ingress.yaml` (taken from guide - https://www.keycloak.org/getting-started/getting-started-kube)
 * Now you can access KeyCloak UI via http://keycloak.192.168.8.4.nip.io (default username/psw: admin/admin)
-* Also - please follow the guide (https://www.keycloak.org/getting-started/getting-started-kube) and create the following:
-    * Realm - Librarian2
-    * Client - librarian2
-    * User to login into realm
+* Also - will be a good idea to change default admin password
+8. Configure KeyCloak
+* Create new realm "librarian2"
+* Create new user / users (create at least one)
+* Create client "librarian2-frontend"
+    * `OpenID Connect, Client authorization: off, Standart flow: on, Direct access grant: on, Valid redirectURIs: <app url>/*, Web origins: *`
+* Create client "librarian2-backend"
+    * `OpenID Connect, Client authorization: on, Authorization: on, Standart flow: on, Direct access grant: on, Valid redirectURIs: <app url>/*, Web origins: *`
+    * Open "Credentials", copy "Client secret" - it will used later in deployment configuration
+* DO NOT MISS TO ADD `/*` to app url in "Valid redirect URIs" field!
+* Additional details about initial configuration of KeyCloak are available here - https://www.keycloak.org/getting-started/getting-started-kube 
+* Run app and check that KeyCloak auth works for frontend and backend requests
