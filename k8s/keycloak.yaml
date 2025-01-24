@@ -34,22 +34,26 @@ spec:
       containers:
         - name: keycloak
           image: quay.io/keycloak/keycloak:26.1.0
-          args: ["start-dev"]
+          args: ["start"]
           env:
-            - name: DB
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            - name: KC_HOSTNAME
+              value: "http://keycloak.192.168.8.4.nip.io"
+            - name: KC_DB
               value: "postgres"
-            - name: DB_URL
+            - name: KC_DB_URL
               value: "jdbc:postgresql://192.168.8.4:5432/keycloak"
-            - name: DB_USERNAME
+            - name: KC_DB_USERNAME
               value: "keycloak"
-            - name: DB_PASSWORD
+            - name: KC_DB_PASSWORD
               valueFrom: 
                 secretKeyRef: 
                   name: db-password
                   key: password
-            - name: KEYCLOAK_ADMIN
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
               value: "admin"
-            - name: KEYCLOAK_ADMIN_PASSWORD
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
               value: "admin"
             - name: KC_PROXY
               value: "edge"
