@@ -25,12 +25,12 @@ public class TreeProcessor {
             this.bookId = null;
         }
 
-        TreeNode(Book book, Integer userId) {
+        TreeNode(Book book, String userName) {
             this.name = book.titleWithSerie();
             children = new ArrayList<>();
             this.bookId = book.bookId;
-            this.readed = book.isReaded(userId);
-            this.mustRead = book.isMustRead(userId);
+            this.readed = book.isReaded(userName);
+            this.mustRead = book.isMustRead(userName);
             this.deletedInLibrary = book.deletedInLibrary;
         }
     }
@@ -40,7 +40,7 @@ public class TreeProcessor {
     /**
      * Books should be ALREADY ORDERED BY serieName and numInSeries!
      */
-    public static List<TreeNode> convertToTree(List<Book> books, Integer userId) {
+    public static List<TreeNode> convertToTree(List<Book> books, String userName) {
         Book prevSerie = null;
         TreeNode serieNode = null;
         List<TreeNode> res = new LinkedList<>();
@@ -60,16 +60,16 @@ public class TreeProcessor {
                         serieNode = new TreeNode(book.serieName);
                         res.add(serieNode);
                     }
-                    serieNode.children.add(new TreeNode(book, userId));
+                    serieNode.children.add(new TreeNode(book, userName));
                 } else {
                     // We start to track a first serie
                     serieNode = new TreeNode(book.serieName);
                     res.add(serieNode);
-                    serieNode.children.add(new TreeNode(book, userId));
+                    serieNode.children.add(new TreeNode(book, userName));
                 }
             } else {
                 // This is the book without serie
-                res.add(new TreeNode(book, userId));
+                res.add(new TreeNode(book, userName));
             }
             prevSerie = book;
         }

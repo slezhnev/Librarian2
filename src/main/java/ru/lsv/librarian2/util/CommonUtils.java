@@ -12,7 +12,6 @@ import org.jboss.logging.Logger;
 
 import jakarta.transaction.Transactional;
 import ru.lsv.librarian2.models.Book;
-import ru.lsv.librarian2.models.LibUser;
 
 public class CommonUtils {
 
@@ -32,14 +31,13 @@ public class CommonUtils {
 	}
 
 	@Transactional
-	public static void updateDownloadedBook(Integer bookId, Integer userId) {
+	public static void updateDownloadedBook(Integer bookId, String userName) {
 		LOG.infof("[bookId: %d] Removing mustRead mark and set readed", bookId);
 		Book book = Book.findById(bookId);
-		LibUser user = LibUser.findById(userId);
 		book.mustRead = new HashSet<>(book.mustRead);
 		book.readed = new HashSet<>(book.readed);
-		book.mustRead.remove(user);
-		book.readed.add(user);
+		book.mustRead.remove(userName);
+		book.readed.add(userName);
 		book.persist();
 	}
 

@@ -8,9 +8,11 @@ import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.RestQuery;
 
 import io.quarkiverse.renarde.Controller;
+import io.quarkus.security.Authenticated;
 import jakarta.ws.rs.Path;
 import ru.lsv.librarian2.models.Author;
 
+@Authenticated
 public class Authors extends Controller {
 
 	public static class AuthorView {

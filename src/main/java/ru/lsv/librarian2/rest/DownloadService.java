@@ -7,7 +7,6 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.MediaType;
 import ru.lsv.librarian2.models.Book;
-import ru.lsv.librarian2.models.LibUser;
 import ru.lsv.librarian2.util.CommonUtils;
 import ru.lsv.librarian2.util.DownloadPreparationService;
 import ru.lsv.librarian2.util.DownloadUtils;
@@ -18,15 +17,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.RestResponse;
 import org.jboss.resteasy.reactive.RestResponse.ResponseBuilder;
 
 import io.quarkiverse.renarde.Controller;
+import io.quarkus.security.Authenticated;
 import io.vertx.core.file.OpenOptions;
 
+@Authenticated
 @SuppressWarnings("rawtypes")
 public class DownloadService extends Controller {
 
@@ -35,14 +36,17 @@ public class DownloadService extends Controller {
     @Inject
     Vertx vertx;
 
+    @Inject
+    JsonWebToken principal;	
+
     @Path("/download/todownload")
-    public List<Integer> getPreparedToDownload(@RestPath Integer userId) {
-        return Book.searchToDownload(userId);
+    public List<Integer> getPreparedToDownload() {
+        return Book.searchToDownload(principal.getName());
     }
 
     @Path("/download/numbertodownload")
-    public Long getNumberPreparedToRead(@RestPath Integer userId) {
-        return Book.countToDownload(userId);
+    public Long getNumberPreparedToRead() {
+        return Book.countToDownload(principal.getName());
     }
 
     /**
@@ -50,7 +54,6 @@ public class DownloadService extends Controller {
      * 
      * @param bookId       Book id
      * @param downloadType 0 - fb2, 1 - fb2.zip
-     * @param userId       User id
      * @return 200 without body if file was successfully sent to processing <br/>
      *         200 with int body in case of: <br/>
      *         <ul>
@@ -60,9 +63,8 @@ public class DownloadService extends Controller {
      *         error status (400/500) in case of errors
      */
     @Path("/download/preparetodownload")
-    public RestResponse prepareToDownload(@RestPath Integer bookId, @RestPath Integer downloadType,
-            @RestPath Integer userId) {
-        Triple<Book, LibUser, RestResponse> checkResult = checkParameters(bookId, downloadType, userId);
+    public RestResponse prepareToDownload(@RestPath Integer bookId, @RestPath Integer downloadType) {
+        Pair<Book, RestResponse> checkResult = checkParameters(bookId, downloadType, principal.getName());
         if (checkResult.getRight() != null) {
             return checkResult.getRight();
         }
@@ -80,15 +82,14 @@ public class DownloadService extends Controller {
     }
 
     @Path("/download/preparedbook")
-    public RestResponse downloadPrepared(@RestPath Integer bookId, @RestPath Integer downloadType,
-            @RestPath Integer userId) {
-        Triple<Book, LibUser, RestResponse> checkResult = checkParameters(bookId, downloadType, userId);
+    public RestResponse downloadPrepared(@RestPath Integer bookId, @RestPath Integer downloadType) {
+        Pair<Book, RestResponse> checkResult = checkParameters(bookId, downloadType, principal.getName());
         if (checkResult.getRight() != null) {
             return checkResult.getRight();
         }
         Pair<File, File> bookFiles = DownloadUtils.getBookFiles(checkResult.getLeft(), downloadType);
         if (bookFiles.getLeft().exists() && bookFiles.getRight().exists()) {
-            return sendFileToDownload(downloadType, checkResult.getLeft(), checkResult.getMiddle(),
+            return sendFileToDownload(downloadType, checkResult.getLeft(), principal.getName(),
                     bookFiles.getLeft());
         } else {
             return ResponseBuilder.create(400, "Book was not prepared yet").build();
@@ -96,9 +97,8 @@ public class DownloadService extends Controller {
     }
 
     @Path("/download/book")
-    public RestResponse downloadBook(@RestPath Integer bookId, @RestPath Integer downloadType,
-            @RestPath Integer userId) {
-        Triple<Book, LibUser, RestResponse> checkResult = checkParameters(bookId, downloadType, userId);
+    public RestResponse downloadBook(@RestPath Integer bookId, @RestPath Integer downloadType) {
+        Pair<Book, RestResponse> checkResult = checkParameters(bookId, downloadType, principal.getName());
         if (checkResult.getRight() != null) {
             return checkResult.getRight();
         }
@@ -109,34 +109,29 @@ public class DownloadService extends Controller {
             return ResponseBuilder.create(400, e.getMessage()).build();
         }
 
-        return sendFileToDownload(downloadType, checkResult.getLeft(), checkResult.getMiddle(), tempOutputFile);
+        return sendFileToDownload(downloadType, checkResult.getLeft(), principal.getName(), tempOutputFile);
     }
 
-    private Triple<Book, LibUser, RestResponse> checkParameters(Integer bookId, Integer downloadType,
-            Integer userId) {
+    private Pair<Book, RestResponse> checkParameters(Integer bookId, Integer downloadType,
+            String userName) {
         Book book = Book.findById(bookId);
         if (book == null) {
             LOG.errorf("[bookId: %d] Cannot find specified book", bookId);
-            return Triple.of(null, null, ResponseBuilder.create(400, "Cannot find specified book").build());
+            return Pair.of(null, ResponseBuilder.create(400, "Cannot find specified book").build());
         }
         if (downloadType != 1 && downloadType != 2) {
             LOG.errorf("[bookId: %d] Bad downloadType was provided: %d", bookId, downloadType);
-            return Triple.of(book, null, ResponseBuilder.create(400, "Bad downloadType was provided").build());
+            return Pair.of(book, ResponseBuilder.create(400, "Bad downloadType was provided").build());
         }
-        LibUser user = LibUser.findById(userId);
-        if (user == null) {
-            LOG.errorf("[bookId: %d] Cannot find specified user: %d", bookId, userId);
-            return Triple.of(book, null, ResponseBuilder.create(400, "Cannot find specified user").build());
-        }
-        return Triple.of(book, user, null);
+        return Pair.of(book, null);
     }
 
-    private RestResponse sendFileToDownload(Integer downloadType, Book book, LibUser user,
+    private RestResponse sendFileToDownload(Integer downloadType, Book book, String userName,
             File fileToDownload) {
         if (fileToDownload != null) {
             FileSystem fileSystem = vertx.fileSystem();
             fileSystem.open(fileToDownload.getAbsolutePath(), new OpenOptions());
-            CommonUtils.updateDownloadedBook(book.bookId, user.userId);
+            CommonUtils.updateDownloadedBook(book.bookId, userName);
             LOG.infof("[bookId: %d] Sending file to customer", book.bookId, book.id);
             return ResponseBuilder
                     .ok(fileSystem.openBlocking(fileToDownload.getAbsolutePath(), new OpenOptions()),

@@ -12,6 +12,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.persistence.Cacheable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -87,20 +88,6 @@ public class Book extends PanacheEntityBase {
 	public String annotation;
 
 	/**
-	 * Read mark
-	 */
-	@ManyToMany(cascade = CascadeType.ALL)
-	@JoinTable(name = "book_readed", joinColumns = @JoinColumn(name = "book_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
-	public Set<LibUser> readed;
-
-	/**
-	 * Mark about "want to read"
-	 */
-	@ManyToMany(cascade = CascadeType.ALL)
-	@JoinTable(name = "book_must_readed", joinColumns = @JoinColumn(name = "book_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
-	public Set<LibUser> mustRead;
-
-	/**
 	 * Mark what book was deleted in library
 	 */
 	public Boolean deletedInLibrary;
@@ -112,14 +99,26 @@ public class Book extends PanacheEntityBase {
 	public Library library;
 
 	/**
+	 * Set of user names, who read this book
+	 */
+	@ElementCollection
+	public Set<String> readed;
+
+	/**
+	 * Set of user names, which marks this book as "must read"
+	 */
+	@ElementCollection
+	public Set<String> mustRead;
+
+	/**
 	 * Returns boolean isReaded, based on supplied userId
 	 * 
-	 * @param userId userId
+	 * @param userName userName
 	 * @return is book was readed by supplied user
 	 */
-	public boolean isReaded(Integer userId) {
-		if (this.readed != null && !this.readed.isEmpty()) {
-			return this.readed.stream().map(el -> el.userId).anyMatch(el -> el.equals(userId));
+	public boolean isReaded(String userName) {
+		if (readed != null && readed.size() > 0) {
+			return readed.contains(userName);
 		} else {
 			return false;
 		}
@@ -128,12 +127,12 @@ public class Book extends PanacheEntityBase {
 	/**
 	 * Returns boolean isMustRead, based on supplied userId
 	 * 
-	 * @param userId userId
+	 * @param userName userName
 	 * @return is book should be read by supplied user
 	 */
-	public boolean isMustRead(Integer userId) {
-		if (this.mustRead != null && !this.mustRead.isEmpty()) {
-			return this.mustRead.stream().map(el -> el.userId).anyMatch(el -> el.equals(userId));
+	public boolean isMustRead(String userName) {
+		if (mustRead != null && mustRead.size() > 0) {
+			return mustRead.contains(userName);
 		} else {
 			return false;
 		}
@@ -167,10 +166,10 @@ public class Book extends PanacheEntityBase {
 	 * @param userId      userId which read the serie
 	 * @return set of series
 	 */
-	public static List<String> searchForReadedSeries(String serieSearch, Integer userId) {
+	public static List<String> searchForReadedSeries(String serieSearch, String userName) {
 		return find(
-				"select distinct b.serieName from Book b join b.readed r where b.serieName like ?1 and r.userId = ?2 order by b.serieName",
-				CommonUtils.updateSearch(serieSearch), userId).project(String.class).stream()
+				"select distinct b.serieName from Book b where b.serieName like ?1 and ?2 in elements(b.readed) order by b.serieName",
+				CommonUtils.updateSearch(serieSearch), userName).project(String.class).stream()
 				.filter(el -> !el.isBlank()).collect(Collectors.toList());
 	}
 
@@ -198,14 +197,15 @@ public class Book extends PanacheEntityBase {
 	 * @param userId      userId which read the serie
 	 * @return Set of series which has new books
 	 */
-	public static List<String> searchSeriesWithNewBooks(String serieSearch, Integer userId) {
+	// TODO WILL NOT WORK - should be redesigned
+	public static List<String> searchSeriesWithNewBooks(String serieSearch, String userName) {
 		ReadedSeries prev = null;
 		List<String> seriesWithNew = new ArrayList<>();
 		List<ReadedSeries> series = find(
 				"select b.serieName, u.userId, count(b.bookId) as totalInSerie from Book b " + "left join b.readed u "
 						+ "where b.serieName like ?1 and (u.userId = ?2 or u.userId is null) "
 						+ "group by b.serieName, u.userId order by b.serieName, u.userId",
-				CommonUtils.updateSearch(serieSearch), userId).project(ReadedSeries.class).list();
+				CommonUtils.updateSearch(serieSearch), userName).project(ReadedSeries.class).list();
 		for (ReadedSeries rs : series) {
 			if (rs.serieName != null && !rs.serieName.isBlank()) {
 				if (prev != null && prev.serieName != null && prev.serieName.equals(rs.serieName)) {
@@ -239,13 +239,13 @@ public class Book extends PanacheEntityBase {
 		return list("from Book where title like ?1", Sort.by("title"), CommonUtils.updateSearch(searchTitle));
 	}
 
-	public static long countToDownload(Integer userId) {
-		return count("from Book b join b.mustRead mr where mr.userId = ?1", userId);
+	public static long countToDownload(String userName) {
+		return count("from Book b where ?1 in elements(b.mustRead)", userName);
 	}
 
-	public static List<Integer> searchToDownload(Integer userId) {
-		return find("select b.bookId from Book b join b.mustRead mr where mr.userId = ?1 order by b.title, b.crc32",
-				userId).project(Integer.class).list();
+	public static List<Integer> searchToDownload(String userName) {
+		return find("select b.bookId from Book where ?1 in elements(b.mustRead) order by b.title, b.crc32",
+				userName).project(Integer.class).list();
 	}
 
 	@Override

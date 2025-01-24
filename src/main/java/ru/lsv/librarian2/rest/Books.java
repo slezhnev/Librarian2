@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
 
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
 
 import org.jboss.resteasy.reactive.RestPath;
@@ -15,14 +16,18 @@ import org.jboss.resteasy.reactive.RestResponse.ResponseBuilder;
 
 import io.quarkiverse.renarde.Controller;
 import io.quarkus.security.Authenticated;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Path;
 import ru.lsv.librarian2.models.Book;
-import ru.lsv.librarian2.models.LibUser;
 import ru.lsv.librarian2.models.TreeProcessor;
 import ru.lsv.librarian2.rest.Authors.AuthorView;
 
+@Authenticated
 public class Books extends Controller {
+
+    @Inject
+    JsonWebToken principal;	
 
 	public static class BookView {
 		public Integer bookId;
@@ -38,7 +43,7 @@ public class Books extends Controller {
 		public Boolean mustRead;
 		public Boolean deletedInLibrary;
 
-		BookView(Book book, Integer userId) {
+		BookView(Book book, String userName) {
 			this.bookId = book.bookId;
 			this.authors = book.authors == null ? new LinkedList<>()
 					: book.authors.stream().map(Authors.AUTHOR_MAPPER).collect(Collectors.toList());
@@ -49,8 +54,8 @@ public class Books extends Controller {
 			this.serieName = book.serieName;
 			this.numInSerie = book.numInSerie;
 			this.annotation = book.annotation;
-			this.readed = book.isReaded(userId);
-			this.mustRead = book.isMustRead(userId);
+			this.readed = book.isReaded(userName);
+			this.mustRead = book.isMustRead(userName);
 			this.deletedInLibrary = book.deletedInLibrary;
 		}
 
@@ -90,18 +95,18 @@ public class Books extends Controller {
 	public static Function<Book, BookView> BOOK_MAPPER = el -> new BookView(el);
 
 	@Path("/book")
-	public BookView getBookById(@RestPath Integer id, @RestPath Integer userId) {
+	public BookView getBookById(@RestPath Integer id) {
 		Book book = Book.findById(id);
 		if (book == null) {
 			return new BookView();
 		} else {
-			return new BookView(book, userId);
+			return new BookView(book, principal.getName());
 		}
 	}
 
 	@Path("/books/byAuthor")
-	public List<TreeProcessor.TreeNode> getBookBySerie(@RestPath Integer userId, @RestQuery Integer authorId) {
-		return TreeProcessor.convertToTree(Book.listByAuthor(authorId), userId);
+	public List<TreeProcessor.TreeNode> getBookBySerie(@RestQuery Integer authorId) {
+		return TreeProcessor.convertToTree(Book.listByAuthor(authorId), principal.getName());
 	}
 
 	@Path("/books/byAuthorRaw")
@@ -110,8 +115,8 @@ public class Books extends Controller {
 	}
 
 	@Path("/books/byTitle")
-	@Authenticated
 	public List<BookView> getByTitle(@RestQuery String title) {
+		LOG.infof("Principal name: %s", principal.getName());
 		return Book.searchByTitle(title).stream().map(BOOK_MAPPER).collect(Collectors.toList());
 	}
 
@@ -119,21 +124,17 @@ public class Books extends Controller {
 		
 	@Transactional
 	@Path("/book/readed")
-	public RestResponse<Object> markAsReaded(@RestPath Integer bookId, @RestPath Integer userId, @RestQuery Boolean readed) {
+	public RestResponse<Object> markAsReaded(@RestPath Integer bookId, @RestQuery Boolean readed) {
 		Book book = Book.findById(bookId);
 		if (book == null) {
-			return ResponseBuilder.notFound().build();
-		}
-		LibUser user = LibUser.findById(userId);
-		if (user == null) {
 			return ResponseBuilder.notFound().build();
 		}
 		book.readed = new HashSet<>(book.readed);
 		book.readed.size();
 		if (readed) {
-			book.readed.add(user);
+			book.readed.add(principal.getName());
 		} else {
-			book.readed.remove(user);
+			book.readed.remove(principal.getName());
 		}
 		book.persistAndFlush();
 		return ResponseBuilder.ok().build();
@@ -141,21 +142,16 @@ public class Books extends Controller {
 
 	@Transactional
 	@Path("/book/mustRead")
-	public RestResponse<Object> markAsMustRead(@RestPath Integer bookId, @RestPath Integer userId, @RestQuery Boolean mustRead) {
+	public RestResponse<Object> markAsMustRead(@RestPath Integer bookId, @RestQuery Boolean mustRead) {
 		Book book = Book.findById(bookId);
 		if (book == null) {
 			return ResponseBuilder.notFound().build();
 		}
-		LibUser user = LibUser.findById(userId);
-		if (user == null) {
-			return ResponseBuilder.notFound().build();
-		}
-		
 		book.mustRead = new HashSet<>(book.mustRead);
 		if (mustRead) {
-			book.mustRead.add(user);
+			book.mustRead.add(principal.getName());
 		} else {
-			book.mustRead.remove(user);
+			book.mustRead.remove(principal.getName());
 		}
 		book.persistAndFlush();
 		return ResponseBuilder.ok().build();
