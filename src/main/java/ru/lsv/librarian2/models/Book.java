@@ -102,6 +102,7 @@ public class Book extends PanacheEntityBase {
 	 * Set of user names, who read this book
 	 */
 	@ElementCollection
+	@Column(columnDefinition = "TEXT")
 	public Set<String> readed;
 
 	/**
@@ -244,7 +245,7 @@ public class Book extends PanacheEntityBase {
 	}
 
 	public static List<Integer> searchToDownload(String userName) {
-		return find("select b.bookId from Book where ?1 in elements(b.mustRead) order by b.title, b.crc32",
+		return find("select b.bookId from Book b where ?1 in elements(b.mustRead) order by b.title, b.crc32",
 				userName).project(Integer.class).list();
 	}
 

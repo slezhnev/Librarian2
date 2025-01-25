@@ -4,16 +4,21 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.RestQuery;
 
 import io.quarkiverse.renarde.Controller;
 import io.quarkus.security.Authenticated;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.Path;
 import ru.lsv.librarian2.models.Author;
 
 @Authenticated
 public class Authors extends Controller {
+
+    @Inject
+    JsonWebToken principal;	
 
 	public static class AuthorView {
 		public Integer authorId;
@@ -43,13 +48,13 @@ public class Authors extends Controller {
 	}
 
 	@Path("/authors/withNewBook")
-	public List<AuthorView> getWithNewBook(@RestPath Integer userId, @RestQuery String lastName) {
-		return Author.searchWithNewBooks(userId, lastName).stream().map(AUTHOR_MAPPER).collect(Collectors.toList());
+	public List<AuthorView> getWithNewBook(@RestQuery String lastName) {
+		return Author.searchWithNewBooks(principal.getName(), lastName).stream().map(AUTHOR_MAPPER).collect(Collectors.toList());
 	}
 
 	@Path("/authors/readed")
-	public List<AuthorView> getReaded(@RestPath Integer userId, @RestQuery String lastName) {
-		return Author.searchReaded(userId, lastName).stream().map(AUTHOR_MAPPER).collect(Collectors.toList());
+	public List<AuthorView> getReaded(@RestQuery String lastName) {
+		return Author.searchReaded(principal.getName(), lastName).stream().map(AUTHOR_MAPPER).collect(Collectors.toList());
 	}
 
 

@@ -90,12 +90,13 @@ public class Author extends PanacheEntityBase {
 		}
 	}
 
-	public static List<Author> searchWithNewBooks(Integer userId, String lastNameSearch) {
+	// TODO WILL NOT WORK - should be redesigned
+	public static List<Author> searchWithNewBooks(String userName, String lastNameSearch) {
 		List<SearchAuthor> authorIds = find(
 				"select a.authorId, u.userId, count(b.bookId) as totalInSerie from Author a left join a.books b left join b.readed u "
 						+ "where a.lastName like ?1 and (u.userId = ?2 or u.userId is null) "
 						+ "group by a.authorId, u.userId order by a.authorId, u.userId",
-				CommonUtils.updateSearch(lastNameSearch), userId).project(SearchAuthor.class).list();
+				CommonUtils.updateSearch(lastNameSearch), userName).project(SearchAuthor.class).list();
 		SearchAuthor prev = null;
 		List<Integer> foundAuthors = new ArrayList<>();
 		for (SearchAuthor curr : authorIds) {
@@ -108,11 +109,11 @@ public class Author extends PanacheEntityBase {
 				foundAuthors);
 	}
 
-	public static List<Author> searchReaded(Integer userId, String lastNameSearch) {
+	public static List<Author> searchReaded(String userName, String lastNameSearch) {
 		List<Integer> authorIds = find(
-				"select distinct a.authorId from Author a left join a.books b left join b.readed u "
-						+ "where a.lastName like ?1 and u.userId = ?2",
-				CommonUtils.updateSearch(lastNameSearch), userId).project(Integer.class).list();
+				"select distinct a.authorId from Author a left join a.books b "
+						+ "where a.lastName like ?1 and ?2 in elements(b.readed)",
+				CommonUtils.updateSearch(lastNameSearch), userName).project(Integer.class).list();
 		return list("from Author where authorId in ?1", Sort.by("lastName").and("firstName").and("middleName"),
 				authorIds);
 	}
