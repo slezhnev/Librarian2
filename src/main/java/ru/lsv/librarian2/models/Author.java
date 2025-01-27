@@ -90,23 +90,13 @@ public class Author extends PanacheEntityBase {
 		}
 	}
 
-	// TODO WILL NOT WORK - should be redesigned
 	public static List<Author> searchWithNewBooks(String userName, String lastNameSearch) {
-		List<SearchAuthor> authorIds = find(
-				"select a.authorId, u.userId, count(b.bookId) as totalInSerie from Author a left join a.books b left join b.readed u "
-						+ "where a.lastName like ?1 and (u.userId = ?2 or u.userId is null) "
-						+ "group by a.authorId, u.userId order by a.authorId, u.userId",
-				CommonUtils.updateSearch(lastNameSearch), userName).project(SearchAuthor.class).list();
-		SearchAuthor prev = null;
-		List<Integer> foundAuthors = new ArrayList<>();
-		for (SearchAuthor curr : authorIds) {
-			if (prev != null && curr != null && prev.authorId != null && prev.authorId.equals(curr.authorId)) {
-				foundAuthors.add(curr.authorId);
-			}
-			prev = curr;
-		}
-		return list("from Author where authorId in ?1", Sort.by("lastName").and("firstName").and("middleName"),
-				foundAuthors);
+		return list("from Author where authorId in (" +
+				"select distinct a.authorId from Author a join a.books b " +
+				"where a.lastName like ?1 and ?2 not in elements(b.readed) " +
+				"and a.authorId in (select distinct a.authorId from Author a left join a.books b where ?2 in elements(b.readed)))",
+				Sort.by("lastName").and("firstName").and("middleName"),
+				CommonUtils.updateSearch(lastNameSearch), userName);
 	}
 
 	public static List<Author> searchReaded(String userName, String lastNameSearch) {

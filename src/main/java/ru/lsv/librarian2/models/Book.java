@@ -1,7 +1,6 @@
 package ru.lsv.librarian2.models;
 
 import java.sql.Date;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -198,23 +197,13 @@ public class Book extends PanacheEntityBase {
 	 * @param userId      userId which read the serie
 	 * @return Set of series which has new books
 	 */
-	// TODO WILL NOT WORK - should be redesigned
 	public static List<String> searchSeriesWithNewBooks(String serieSearch, String userName) {
-		ReadedSeries prev = null;
-		List<String> seriesWithNew = new ArrayList<>();
-		List<ReadedSeries> series = find(
-				"select b.serieName, u.userId, count(b.bookId) as totalInSerie from Book b " + "left join b.readed u "
-						+ "where b.serieName like ?1 and (u.userId = ?2 or u.userId is null) "
-						+ "group by b.serieName, u.userId order by b.serieName, u.userId",
-				CommonUtils.updateSearch(serieSearch), userName).project(ReadedSeries.class).list();
-		for (ReadedSeries rs : series) {
-			if (rs.serieName != null && !rs.serieName.isBlank()) {
-				if (prev != null && prev.serieName != null && prev.serieName.equals(rs.serieName)) {
-					seriesWithNew.add(rs.serieName);
-				}
-				prev = rs;
-			}
-		}
+		List<String> seriesWithNew = find(
+				"select distinct b.serieName from Book b " +
+						"where b.serieName like ?1 and ?2 not in elements(b.readed) " +
+						"and b.serieName in (select distinct b.serieName from Book b where ?2 in elements(b.readed)) " +
+						"order by b.serieName",
+				CommonUtils.updateSearch(serieSearch), userName).project(String.class).list();
 		return seriesWithNew;
 	}
 
