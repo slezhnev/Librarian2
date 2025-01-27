@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -136,8 +138,10 @@ public class DownloadUtils {
         tempOutputFile.deleteOnExit();
         tempOutputFilePrepared.deleteOnExit();
 
-        LOG.infof("[bookId: %d] Temp file '%s' was created. Starting to search a book inside archive", book.bookId,
-                tempOutputFile.getAbsolutePath());
+        String bookNameInsideArchive = book.id + ".fb2";
+        LOG.infof("[bookId: %d] Temp file '%s' was created. Starting to search a book inside archive as %s",
+                book.bookId,
+                tempOutputFile.getAbsolutePath(), bookNameInsideArchive);
         boolean found = false;
         try (OutputStream mainOut = new FileOutputStream(tempOutputFile)) {
             OutputStream out;
@@ -145,27 +149,23 @@ public class DownloadUtils {
                 case 1 -> out = mainOut;
                 default -> out = new ZipArchiveOutputStream(mainOut);
             }
-            try (ZipArchiveInputStream arcInput = new ZipArchiveInputStream(new FileInputStream(arcFile))) {
-                ArchiveEntry entry;
-                while ((entry = arcInput.getNextEntry()) != null) {
-                    String id = FilenameUtils.getBaseName(entry.getName());
-                    if (id.equals(book.id)) {
-                        LOG.infof("[bookId: %d] Book found as  '%s'. Starting to copy it to temp file", book.bookId,
-                                book.id);
-                        if (out instanceof ZipArchiveOutputStream zipArchiveOutputStream) {
-                            zipArchiveOutputStream.setLevel(9);
-                            zipArchiveOutputStream
-                                    .putArchiveEntry(new ZipArchiveEntry(book.id + ".fb2"));
-                        }
-                        IOUtils.copy(arcInput, out);
-                        if (out instanceof ZipArchiveOutputStream zipArchiveOutputStream) {
-                            zipArchiveOutputStream.closeArchiveEntry();
-                            zipArchiveOutputStream.finish();
-                        }
-                        LOG.infof("[bookId: %d] Book found as '%s'. File copied", book.bookId, book.id);
-                        found = true;
-                        break;
+            try (ZipFile zip = new ZipFile(arcFile)) {
+                ZipEntry entry = zip.getEntry(bookNameInsideArchive);
+                if (entry != null) {
+                    found = true;
+                    LOG.infof("[bookId: %d] Book found. Starting to copy it to temp file", book.bookId,
+                            book.id);
+                    if (out instanceof ZipArchiveOutputStream zipArchiveOutputStream) {
+                        zipArchiveOutputStream.setLevel(9);
+                        zipArchiveOutputStream
+                                .putArchiveEntry(new ZipArchiveEntry(book.id + ".fb2"));
                     }
+                    IOUtils.copy(zip.getInputStream(entry), out);
+                    if (out instanceof ZipArchiveOutputStream zipArchiveOutputStream) {
+                        zipArchiveOutputStream.closeArchiveEntry();
+                        zipArchiveOutputStream.finish();
+                    }
+                    LOG.infof("[bookId: %d] File copied", book.bookId);
                 }
             }
         } catch (IOException ex) {

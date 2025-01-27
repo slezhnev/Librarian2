@@ -23,6 +23,7 @@ public class DownloadPreparationService {
     private final Logger LOG = Logger.getLogger(DownloadPreparationService.class);
 
     public void prepareForDownload(Book book, int downloadType) {
+        LOG.infof("[bookId: %d] Sending to executor service for preparation. DownloadType: %d", book.bookId, downloadType);
         service.submit(() -> {
             try {
                 DownloadUtils.prepareForDownload(book, downloadType);

@@ -24,7 +24,8 @@
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0",
     "keycloak-angular": "^19.0.0",
-    "keycloak-js": "26.1.0"
+    "keycloak-js": "26.1.0",
+    "ngx-filesaver": "^19.0.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^19.0.2",

@@ -259,8 +259,8 @@ public class Book extends PanacheEntityBase {
 		}
 		if (serieName != null && !serieName.isBlank() && author != null) {
 			return String.format("%s %s (%s - %d)", author, this.title, this.serieName, this.numInSerie);
-		} else if (serieName != null && !serieName.isBlank() && author != null) {
-			return String.format("%s (%s - %d)", this.title, this.serieName, this.numInSerie);
+		} else if ((serieName == null || serieName.isBlank()) && author != null) {
+			return String.format("%s %s", author, this.title);
 		} else {
 			return this.title;
 		}

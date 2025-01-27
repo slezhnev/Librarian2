@@ -37,7 +37,7 @@ public class DownloadService extends Controller {
     Vertx vertx;
 
     @Inject
-    JsonWebToken principal;	
+    JsonWebToken principal;
 
     @Path("/download/todownload")
     public List<Integer> getPreparedToDownload() {
@@ -76,6 +76,7 @@ public class DownloadService extends Controller {
         } else if (downloadFiles.getLeft().exists() && downloadFiles.getRight().exists()) {
             return ResponseBuilder.ok(2).build();
         } else {
+            LOG.infof("[bookId: %d] Download service got a request for download", checkResult.getLeft().bookId);
             DownloadPreparationService.getInstance().prepareForDownload(checkResult.getLeft(), downloadType);
             return ResponseBuilder.ok(0).build();
         }
@@ -137,8 +138,10 @@ public class DownloadService extends Controller {
                     .ok(fileSystem.openBlocking(fileToDownload.getAbsolutePath(), new OpenOptions()),
                             MediaType.APPLICATION_OCTET_STREAM)
                     .encoding(StandardCharsets.UTF_8.toString())
-                    .header(HttpHeaders.CONTENT_DISPOSITION.toString(),
-                            "attachment; filename=\"" + fileToDownload.getName() + "\"")
+                    // .header(HttpHeaders.CONTENT_DISPOSITION.toString(),
+                    // "attachment; filename=\"" + fileToDownload.getName() + "\"")
+                    .header("filename",
+                            fileToDownload.getName())
                     .build();
         } else {
             return ResponseBuilder.create(400, "Cannot find book in archive").build();

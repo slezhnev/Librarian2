@@ -116,7 +116,6 @@ public class Books extends Controller {
 
 	@Path("/books/byTitle")
 	public List<BookView> getByTitle(@RestQuery String title) {
-		LOG.infof("Principal name: %s", principal.getName());
 		return Book.searchByTitle(title).stream().map(BOOK_MAPPER).collect(Collectors.toList());
 	}
 
