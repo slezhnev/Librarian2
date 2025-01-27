@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: librarian2
+  namespace: librarian2
+  labels:
+    app: librarian2
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: librarian2
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: librarian2
+  namespace: librarian2
+  labels:
+    app: librarian2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: librarian2
+  template:
+    metadata:
+      labels:
+        app: librarian2
+    spec:
+      containers:
+        - name: librarian2
+          image: 192.168.8.4:17001/quarkus/librarian2-jvm:1.0
+          env:
+            - name: QUARKUS_DATASOURCE_PASSWORD
+              valueFrom: 
+                secretKeyRef: 
+                  name: postgres
+                  key: password
+            - name: QUARKUS_OIDC_CREDENTIALS_SECRET
+              valueFrom: 
+                secretKeyRef: 
+                  name: keycloak
+                  key: secret
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 9000

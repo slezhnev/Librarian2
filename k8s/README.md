@@ -1,4 +1,4 @@
-1. We'll assume that we have microk8s on Linux
+1. We'll assume that we have microk8s (based on Docker) on Linux
 2. Enable the following addons:
 ```
 microk8s enable dashboard
@@ -99,3 +99,14 @@ microk8s config > config
 * DO NOT MISS TO ADD `/*` to app url in "Valid redirect URIs" field!
 * Additional details about initial configuration of KeyCloak are available here - https://www.keycloak.org/getting-started/getting-started-kube 
 * Run app and check that KeyCloak auth works for frontend and backend requests
+
+9. Install Sonatype Nexus 
+* Use `nexus.sh` to bring up instance on Docker
+* Login into it via `<ip>:8081` (initial user / password - admin / admin)
+* Create new Docker registry `docker-staging` (with http connector on port 17001, "allow anonymous docker pull", deployment policy: "allow redeploy")
+* Enable anonymous access
+* Create new role "docker-write" - add `nx-repository-view-docker-docker-staging-add` and `nx-repository-view-docker-docker-staging-edit` priviledges. Add this role to "Anonymous user" (this will allow to perfrom a anonymous pushes to Docker registries)
+
+9. Deploy the application
+* Build and publish a version with `build.cmd`
+* Create namespace "librarian2"
