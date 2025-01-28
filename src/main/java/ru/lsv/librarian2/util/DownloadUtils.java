@@ -1,7 +1,6 @@
 package ru.lsv.librarian2.util;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -9,11 +8,8 @@ import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jboss.logging.Logger;
@@ -36,20 +32,41 @@ public class DownloadUtils {
         new File(System.getProperty("java.io.tmpdir"), dirName).mkdirs();
     }
 
-    public static Pair<File, File> getBookFiles(Book book, int downloadType) {
+    public static File getTempStorage() {
         File tmpDir = new File(System.getProperty("java.io.tmpdir"), dirName);
         tmpDir.deleteOnExit();
+        return tmpDir;
+    }
+
+    public static enum DownloadTypes {
+        FB2("fb2"),
+        FB2ZIP("fb2.zip"),
+        PREPARED("prepared");
+
+        private String ext;
+
+        DownloadTypes(String ext) {
+            this.ext = ext;
+        }
+
+        public String getExt() {
+            return ext;
+        }
+    }
+
+    public static Pair<File, File> getBookFiles(Book book, int downloadType) {
+        File tmpDir = getTempStorage();
         if (tmpDir.exists()) {
             String name = translator.translate(cleanFileName(book.titleWithSerieAndAuthor()));
             switch (downloadType) {
                 case 1 -> {
-                    name = name + ".fb2";
+                    name = name + "." + DownloadTypes.FB2.getExt();
                 }
                 default -> {
-                    name = name + ".fb2.zip";
+                    name = name + "." + DownloadTypes.FB2ZIP.getExt();
                 }
             }
-            String finishMarkName = name + ".prepared";
+            String finishMarkName = name + "." + DownloadTypes.PREPARED.getExt();
             File outputFile = new File(tmpDir, name);
             File outputMarkFile = new File(tmpDir, finishMarkName);
             outputFile.deleteOnExit();
