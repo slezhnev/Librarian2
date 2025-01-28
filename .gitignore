@@ -59,3 +59,5 @@ src/main/webui/.angular/cache/19.0.2/librarian2/angular-compiler.db-lock
 src/main/webui/dist/librarian2/3rdpartylicenses.txt
 src/main/webui/dist/librarian2/prerendered-routes.json
 library.storagePath.override.properties
+tls.key
+tls.crt

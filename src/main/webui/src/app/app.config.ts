@@ -13,7 +13,7 @@ import {
 export const provideKeycloakAngular = () =>
   provideKeycloak({
     config: {
-      url: 'http://keycloak.192.168.8.4.nip.io',
+      url: 'https://keycloak.192.168.8.4.nip.io',
       realm: 'librarian2',
       clientId: 'librarian2-frontend'
     },

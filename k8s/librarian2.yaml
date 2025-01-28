@@ -1,3 +1,33 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: librarian2-certificate
+  namespace: librarian2
+spec:
+  secretName: librarian2-certificate-tls
+
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+  duration: 8760h # 365d
+  renewBefore: 360h # 15d
+  isCA: false
+  usages:
+    - server auth
+    - client auth
+  subject:
+    organizations:
+      - cert-manager
+  dnsNames:
+    - librarian.192.168.8.4.nip.io
+  # Issuer references are always required.
+  issuerRef:
+    name: ca-issuer
+    # We can reference ClusterIssuers by changing the kind here.
+    # The default value is Issuer (i.e. a locally namespaced Issuer)
+    kind: ClusterIssuer
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -8,8 +38,8 @@ metadata:
 spec:
   ports:
     - name: http
-      port: 8080
-      targetPort: 8080
+      port: 8443
+      targetPort: 8443
   selector:
     app: librarian2
   type: ClusterIP
@@ -33,22 +63,38 @@ spec:
     spec:
       containers:
         - name: librarian2
-          image: 192.168.8.4:17001/quarkus/librarian2-jvm:1.0
+          image: 192.168.8.4:17001/quarkus/librarian2-jvm:1.1
+          imagePullPolicy: Always
           env:
+            - name: QUARKUS_HTTP_INSECURE_REQUESTS
+              value: "disabled"
+            - name: QUARKUS_HTTP_SSL_CERTIFICATE_FILES
+              value: "/etc/tls-certificate/tls.crt"
+            - name: QUARKUS_HTTP_SSL_CERTIFICATE_KEY_FILES
+              value: "/etc/tls-certificate/tls.key"
             - name: QUARKUS_DATASOURCE_PASSWORD
               valueFrom: 
                 secretKeyRef: 
-                  name: postgres
-                  key: password
+                  name: librarian2
+                  key: db.password
             - name: QUARKUS_OIDC_CREDENTIALS_SECRET
               valueFrom: 
                 secretKeyRef: 
-                  name: keycloak
-                  key: secret
+                  name: librarian2
+                  key: keycloak.secret
+          volumeMounts:
+            # name must match the volume name below
+            - name: tls-certificate
+              mountPath: /etc/tls-certificate
+              readOnly: true
           ports:
             - name: http
-              containerPort: 8080
+              containerPort: 8443
           readinessProbe:
             httpGet:
               path: /health/ready
               port: 9000
+      volumes:
+        - name: tls-certificate
+          secret:
+            secretName: librarian2-certificate-tls   

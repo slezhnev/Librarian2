@@ -86,15 +86,15 @@ microk8s config > config
 `kubectl create -n keycloak -f keycloak.yaml` (taken from https://raw.githubusercontent.com/keycloak/keycloak-quickstarts/refs/heads/main/kubernetes/keycloak.yaml)
 * Create KeyCloak ingress
 `kubectl apply -f keycloak-ingress.yaml` (taken from guide - https://www.keycloak.org/getting-started/getting-started-kube)
-* Now you can access KeyCloak UI via http://keycloak.192.168.8.4.nip.io (default username/psw: admin/admin)
+* Now you can access KeyCloak UI via https://keycloak.192.168.8.4.nip.io (default username/psw: admin/admin)
 * Also - will be a good idea to change default admin password
 8. Configure KeyCloak
 * Create new realm "librarian2"
 * Create new user / users (create at least one)
 * Create client "librarian2-frontend"
-    * `OpenID Connect, Client authorization: off, Standart flow: on, Direct access grant: on, Valid redirectURIs: <app url>/*, Web origins: *`
+    * `OpenID Connect, Client authorization: off, Standart flow: on, Direct access grant: on, Valid redirectURIs: https://librarian.192.168.8.4.nip.io/* https://localhost:8443/*, Web origins: *`
 * Create client "librarian2-backend"
-    * `OpenID Connect, Client authorization: on, Authorization: on, Standart flow: on, Direct access grant: on, Valid redirectURIs: <app url>/*, Web origins: *`
+    * `OpenID Connect, Client authorization: on, Authorization: on, Standart flow: on, Direct access grant: on, Valid redirectURIs: https://librarian.192.168.8.4.nip.io/* https://localhost:8443/*, Web origins: *`
     * Open "Credentials", copy "Client secret" - it will used later in deployment configuration
 * DO NOT MISS TO ADD `/*` to app url in "Valid redirect URIs" field!
 * Additional details about initial configuration of KeyCloak are available here - https://www.keycloak.org/getting-started/getting-started-kube 
@@ -106,7 +106,48 @@ microk8s config > config
 * Create new Docker registry `docker-staging` (with http connector on port 17001, "allow anonymous docker pull", deployment policy: "allow redeploy")
 * Enable anonymous access
 * Create new role "docker-write" - add `nx-repository-view-docker-docker-staging-add` and `nx-repository-view-docker-docker-staging-edit` priviledges. Add this role to "Anonymous user" (this will allow to perfrom a anonymous pushes to Docker registries)
+* Enable to use Nexus in microk8s cluster:
+    * Create the directory `sudo mkdir -p /var/snap/microk8s/current/args/certs.d/192.168.8.4:17001/`
+    * Open the configuration file `sudo nano /var/snap/microk8s/current/args/certs.d/192.168.8.4:17001/hosts.toml`
+    * Place the following content inside
+```
+server = "http://192.168.8.4:17001"
 
-9. Deploy the application
+[host."http://192.168.8.4:17001"]
+capabilities = ["pull", "resolve"]
+```
+    * Restart the cluster
+```
+microk8s stop
+microk8s start
+```
+
+9. Deploy the application via kubectl
 * Build and publish a version with `build.cmd`
 * Create namespace "librarian2"
+* Create secret "librarian2" with db password and keycloak secret (you can use `librarian2-secret.yaml` as template)
+* Deploy deployment and ingress
+```
+kubectl apply -f librarian2.yaml
+kubectl apply -f librarian2-ingress.yaml
+```
+* Application will be accessible via https://librarian.192.168.8.4.nip.io/ 
+
+10. Configure run on development machine in Visual Code Studio
+* Create file `.env` with following content:
+```
+quarkus.datasource.password = <db password>
+quarkus.oidc.credentials.secret = <keycloak secret from librarian2-backend client>
+quarkus.http.ssl.certificate.files=tls.crt
+quarkus.http.ssl.certificate.key-files=tls.key
+quarkus.http.insecure-requests=disabled
+```
+* Somehow connect content of the library to local machine (map it as y: drive for example)
+* Create file 'library.storagePath.override.properties' with following content:
+```
+library.storagePath.2=y:/_Lib.rus.ec - Официальная/lib.rus.ec/
+library.inpxPath.2=y:/_Lib.rus.ec - Официальная/lib.rus.ec/librusec_local_fb2.inpx
+```
+This will overwrite location of librusec library from default to locally mapped location
+* Copy content from secret "librarian2-certificate-tls" (in namespace "librarian2") to tls.crt and tls.key respectively.
+* Local copy can be executed via `run_jar.cmd`
