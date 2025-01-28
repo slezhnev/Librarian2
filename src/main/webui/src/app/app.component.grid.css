@@ -1,0 +1,180 @@
+.mgl-first {
+    width: 100%;
+}
+
+.mgt-first {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 100%;
+    height: 100%;
+}
+
+.mgt-second {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 100%;
+    height: 100%;
+}
+
+.searchblock {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    justify-content: flex-start;
+    height: 100%;
+}
+
+.searchtype {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.searchtype-radio-group {
+    display: flex;
+    flex-direction: row;
+    margin: 15px 0;
+    justify-content: flex-start;
+}
+
+.searchtype-radiobutton {
+    margin: 5px;
+}
+
+.searchtype-param {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    margin: 15px;
+}
+
+.searchform {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 4fr 1fr;
+}
+
+.searchform-edit {
+    width: 100%;
+    margin-right: 20px;
+}
+
+.searchform-button {
+    margin-left: 20px;
+    align-self: center;
+}
+
+.searchresult {
+    width: 100%;
+    flex: 1;
+    border: 1px solid #ccc;
+    max-height: 80vh;
+}
+
+.searchresult-mat-action-list {
+    width: 100%;
+}
+
+.searchresult-values {
+    overflow: scroll;
+    width: 100%;
+    height: 100%;
+}
+
+.searchresultblock {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: 100%;
+}
+
+.buttonspanel {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    margin: 10px 10px;
+    gap: 10px
+}
+
+.logoutbuttonpanel{
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  margin-right: 50px;
+}
+
+
+.searchtreeandinfo {
+    display: grid;
+    grid-template-rows: 2fr 1fr;
+    flex: 1;
+    width:100%;
+}
+
+.treewrapper {
+    width: 100%;
+    height: 100%;
+    overflow: scroll;
+    border: 1px solid #ccc;
+    max-height: 60vh;
+  }
+
+  .bookstree {
+    width: 100%;
+    background-color: transparent;
+  }
+  
+  .treeitem-background-highlight{
+    background: rgb(0, 0, 0, .12);
+  }
+  
+  .treeitem-readed{
+    font-style: italic;
+  }
+  
+  .treeitem-mustread{
+    font-weight: bold;
+  }
+  
+  .treeitem-deleted{
+    color: red;
+  }
+  
+  .treeitem:hover{
+    cursor: pointer;
+  }
+
+  .bookwrapper {
+    overflow: scroll;
+    width: 100%;
+    height: 100%;
+    border: 1px solid #ccc;
+    margin: 1px 1px 1px 1px;
+  }
+  
+  .bookinfo {
+    margin:  10px;  
+  }
+  
+  .authorlink {
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .bookinfo-serie {
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .bookinfo-download {
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+  }

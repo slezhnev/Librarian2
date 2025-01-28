@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: librarian2-ingress
+  namespace: librarian2
+  annotations:
+    cert-manager.io/cluster-issuer: ca-issuer
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+spec:
+  tls:
+     - hosts:
+       - librarian.192.168.8.4.nip.io
+       secretName: librarian2-certificate-tls
+  rules:
+    - host: librarian.192.168.8.4.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: librarian2
+                port:
+                  number: 8443
