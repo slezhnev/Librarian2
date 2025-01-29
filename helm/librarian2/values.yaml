@@ -1,0 +1,36 @@
+# Default values for librarian2.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+# Change the repository and image name if needed
+# Also - pullPolicy can be switched to "IfNoExists" then app will go to release
+image:
+  repository: 192.168.8.4:17001/quarkus/librarian2-jvm
+  pullPolicy: Always
+
+podLabels: 
+  app: librarian2
+
+# SHOULD NOT BE CHANGED
+service:
+  port: 8443
+
+# Change host, secret name and cluster issuer name if need
+ingress:
+  host: librarian.192.168.8.4.nip.io
+  secret: librarian2-certificate-tls
+  annotations: 
+    cert-manager.io/cluster-issuer: ca-issuer
+
+# Should be changed to location in which library data are stored
+dataStoragePath: /home/lsv/Downloads/transmission/
+
+# Should be changed to groupID which has access to dataStoragePath above
+podSecurityContext: 
+  supplementalGroups: [112]
+
+# Should be changed to node hostname on which storage are exists
+nodeSelector: 
+  kubernetes.io/hostname: ubuntu-cloud

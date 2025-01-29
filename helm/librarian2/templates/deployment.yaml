@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "librarian2.fullname" . }}
+  labels:
+    {{- include "librarian2.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "librarian2.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "librarian2.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: QUARKUS_HTTP_INSECURE_REQUESTS
+              value: "disabled"
+            - name: QUARKUS_HTTP_SSL_CERTIFICATE_FILES
+              value: "/etc/tls-certificate/tls.crt"
+            - name: QUARKUS_HTTP_SSL_CERTIFICATE_KEY_FILES
+              value: "/etc/tls-certificate/tls.key"
+            - name: QUARKUS_DATASOURCE_PASSWORD
+              valueFrom: 
+                secretKeyRef: 
+                  name: librarian2
+                  key: db.password
+            - name: QUARKUS_OIDC_CREDENTIALS_SECRET
+              valueFrom: 
+                secretKeyRef: 
+                  name: librarian2
+                  key: keycloak.secret
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 9000
+          resources:          
+            requests:
+              memory: "64Mi"
+              cpu: "1"
+            limits:
+              memory: "4Gi"
+              cpu: "4"
+          volumeMounts:
+            - name: tls-certificate
+              mountPath: /etc/tls-certificate
+              readOnly: true
+            - name: book-data
+              mountPath: /data    
+              readOnly: true            
+      volumes:
+        - name: tls-certificate
+          secret:
+            secretName: librarian2-certificate-tls   
+        - name: book-data
+          hostPath: 
+            path: {{ .Values.dataStoragePath }}
+            type: Directory      
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

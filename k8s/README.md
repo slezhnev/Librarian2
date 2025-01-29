@@ -123,9 +123,11 @@ microk8s start
 ```
 
 9. Deploy the application via kubectl
-* Build and publish a version with `build.cmd`
+* Build and publish the version with `build.cmd`
 * Create namespace "librarian2"
 * Create secret "librarian2" with db password and keycloak secret (you can use `librarian2-secret.yaml` as template)
+* Update library files download location in `librarian2.yaml` if needed (`spec.template.spec.volumes[].hostPath.path`)
+* Also update `spec.template.spec.securityContext.supplementalGroups` and pass here groupId for access to needed folder (if you are used `transmision-daemon` - it should be id of group, created to work with it (in my case it was `debian-transmission` with gId:112))
 * Deploy deployment and ingress
 ```
 kubectl apply -f librarian2.yaml
@@ -133,7 +135,15 @@ kubectl apply -f librarian2-ingress.yaml
 ```
 * Application will be accessible via https://librarian.192.168.8.4.nip.io/ 
 
-10. Configure run on development machine in Visual Code Studio
+10. Deploy application via helm
+* Build and publish the version with `build.cmd`
+* Create namespace "librarian2"
+* Create secret "librarian2" with db password and keycloak secret (you can use `librarian2-secret.yaml` as template)
+* Take a look into `helm/librarian/values.yaml` and configure anything you want
+* Perform install `helm install -n librarian2 librarian2 ./librarian2'
+* That's all - link to application url will be provided after installation in console
+
+11. Configure run on development machine in Visual Code Studio
 * Create file `.env` with following content:
 ```
 quarkus.datasource.password = <db password>

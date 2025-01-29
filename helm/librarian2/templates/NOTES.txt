@@ -1,0 +1,1 @@
+1. Application will be available on https://{{ .Values.ingress.host }} by default
