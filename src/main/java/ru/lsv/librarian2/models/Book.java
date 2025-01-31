@@ -173,22 +173,22 @@ public class Book extends PanacheEntityBase {
 				.filter(el -> !el.isBlank()).collect(Collectors.toList());
 	}
 
-	@RegisterForReflection
-	private static class ReadedSeries {
-		public String serieName;
-		@SuppressWarnings("unused")
-		public Integer user_id;
-		@SuppressWarnings("unused")
-		public Long totalInSerie;
+	// @RegisterForReflection
+	// private static class ReadedSeries {
+	// 	public String serieName;
+	// 	@SuppressWarnings("unused")
+	// 	public Integer user_id;
+	// 	@SuppressWarnings("unused")
+	// 	public Long totalInSerie;
 
-		@SuppressWarnings("unused")
-		public ReadedSeries(String serieName, Integer user_id, Long totalInSerie) {
-			this.serieName = serieName;
-			this.user_id = user_id;
-			this.totalInSerie = totalInSerie;
-		}
+	// 	@SuppressWarnings("unused")
+	// 	public ReadedSeries(String serieName, Integer user_id, Long totalInSerie) {
+	// 		this.serieName = serieName;
+	// 		this.user_id = user_id;
+	// 		this.totalInSerie = totalInSerie;
+	// 	}
 
-	}
+	// }
 
 	/**
 	 * Find serie which has new books

@@ -34,3 +34,19 @@ podSecurityContext:
 # Should be changed to node hostname on which storage are exists
 nodeSelector: 
   kubernetes.io/hostname: ubuntu-cloud
+
+postgres:
+  url : jdbc:postgresql://192.168.8.4:5432/librarian
+
+keycloak:
+  url: https://keycloak.192.168.8.4.nip.io/realms/librarian2
+
+otel:
+  url: https://otel-exporter.192.168.8.4.nip.io
+  logs: 
+    enabled: "true"
+  traces: 
+    enabled: "true"
+#    exporter: "none" | DO NOT DISABLE traces. If you need to switch it off - uncomment this line and remove this comment (include | of course)
+  metrics: 
+    enabled: "true"

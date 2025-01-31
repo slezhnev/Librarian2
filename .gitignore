@@ -61,3 +61,4 @@ src/main/webui/dist/librarian2/prerendered-routes.json
 library.storagePath.override.properties
 tls.key
 tls.crt
+tree

@@ -122,6 +122,15 @@ microk8s stop
 microk8s start
 ```
 
+9. Install Grafana-OTel-LGTM.
+* `kubectl create namespace otel`
+* `kubectl apply -n otel -f https://raw.githubusercontent.com/grafana/docker-otel-lgtm/refs/tags/v0.8.2/k8s/lgtm.yaml`
+* `kubectl apply -n otel -f lgtm-ingress.yaml`
+* `kubectl apply -n otel -f lgtm-ingress-grpc.yaml` (currently are not used AND NOT TESTED (!), but why not?)
+* Grafana will be available on https://grafana.192.168.8.4.nip.io (admin/admin) by default. You can configure address in ingress specification.
+* Import `grafana/librarian2_dashboard.json` to Grafana
+* NB This instance will LOST all data on manual restart. So you will need to import all dashboards any time due to manual redeploy / restart.
+
 9. Deploy the application via kubectl
 * Build and publish the version with `build.cmd`
 * Create namespace "librarian2"

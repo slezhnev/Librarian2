@@ -30,6 +30,22 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            - name: QUARKUS_DATASOURCE_JDBC_URL
+              value: {{ .Values.postgres.url }}
+            - name: QUARKUS_OIDC_AUTH_SERVER_URL
+              value: {{  .Values.keycloak.url }}
+            - name: QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.otel.url }}
+            - name: QUARKUS_OTEL_LOGS_ENABLED
+              value: {{ .Values.otel.logs.enabled | quote }}
+            - name: QUARKUS_OTEL_TRACES_ENABLED
+              value: {{ .Values.otel.traces.enabled | quote }}
+              {{ if .Values.otel.traces.exporter }}
+            - name: QUARKUS_OTEL_TRACES_EXPORTER
+              value: {{ .Values.otel.traces.exporter }}
+              {{ end }}
+            - name: QUARKUS_OTEL_METRICS_ENABLED
+              value: {{ .Values.otel.metrics.enabled | quote }}
             - name: QUARKUS_HTTP_INSECURE_REQUESTS
               value: "disabled"
             - name: QUARKUS_HTTP_SSL_CERTIFICATE_FILES
