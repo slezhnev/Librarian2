@@ -170,3 +170,7 @@ library.inpxPath.2=y:/_Lib.rus.ec - Официальная/lib.rus.ec/librusec_l
 This will overwrite location of librusec library from default to locally mapped location
 * Copy content from secret "librarian2-certificate-tls" (in namespace "librarian2") to tls.crt and tls.key respectively.
 * Local copy can be executed via `run_jar.cmd`
+
+12. Debug pod via ephimeral image
+* `POD_NAME=$(kubectl get pods -l app=librarian2 -n librarian2 -o jsonpath='{.items[0].metadata.name}')`
+* `kubectl debug -it -c debugger -n librarian2 --target=librarian2 --image=busybox ${POD_NAME}`

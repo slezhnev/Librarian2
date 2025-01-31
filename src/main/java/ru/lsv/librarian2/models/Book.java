@@ -155,7 +155,7 @@ public class Book extends PanacheEntityBase {
 	 * @return List of series
 	 */
 	public static List<String> searchBySerie(String serieSearch) {
-		return find("select distinct serieName from Book where serieName like ?1 order by serieName",
+		return find("select distinct serieName from Book where serieName like ?1 and serieName <> '' order by serieName",
 				CommonUtils.updateSearch(serieSearch)).project(String.class).list();
 	}
 
@@ -168,27 +168,10 @@ public class Book extends PanacheEntityBase {
 	 */
 	public static List<String> searchForReadedSeries(String serieSearch, String userName) {
 		return find(
-				"select distinct b.serieName from Book b where b.serieName like ?1 and ?2 in elements(b.readed) order by b.serieName",
+				"select distinct b.serieName from Book b where b.serieName like ?1 and b.serieName <> '' and ?2 in elements(b.readed) order by b.serieName",
 				CommonUtils.updateSearch(serieSearch), userName).project(String.class).stream()
 				.filter(el -> !el.isBlank()).collect(Collectors.toList());
 	}
-
-	// @RegisterForReflection
-	// private static class ReadedSeries {
-	// 	public String serieName;
-	// 	@SuppressWarnings("unused")
-	// 	public Integer user_id;
-	// 	@SuppressWarnings("unused")
-	// 	public Long totalInSerie;
-
-	// 	@SuppressWarnings("unused")
-	// 	public ReadedSeries(String serieName, Integer user_id, Long totalInSerie) {
-	// 		this.serieName = serieName;
-	// 		this.user_id = user_id;
-	// 		this.totalInSerie = totalInSerie;
-	// 	}
-
-	// }
 
 	/**
 	 * Find serie which has new books
@@ -200,7 +183,7 @@ public class Book extends PanacheEntityBase {
 	public static List<String> searchSeriesWithNewBooks(String serieSearch, String userName) {
 		List<String> seriesWithNew = find(
 				"select distinct b.serieName from Book b " +
-						"where b.serieName like ?1 and ?2 not in elements(b.readed) " +
+						"where b.serieName like ?1 and b.serieName <> '' and ?2 not in elements(b.readed) " +
 						"and b.serieName in (select distinct b.serieName from Book b where ?2 in elements(b.readed)) " +
 						"order by b.serieName",
 				CommonUtils.updateSearch(serieSearch), userName).project(String.class).list();
