@@ -14,16 +14,20 @@ import org.jboss.logging.Logger;
 
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class TempCleaner {
+
+    @Inject
+    private DownloadUtils downloadUtils;
 
     private final Logger log = Logger.getLogger(TempCleaner.class);
 
     @Scheduled(cron = "0 0 0 * * ?")
     public void cleanOldTempFiles() {
         log.info(("Starting to cleanup an old temp files formed for book download"));
-        File tempStorage = DownloadUtils.getTempStorage();
+        File tempStorage = downloadUtils.getTempStorage();
         if (tempStorage.exists()) {
             try (Stream<Path> files = Files.list(tempStorage.toPath())) {
                 files.filter(el -> {

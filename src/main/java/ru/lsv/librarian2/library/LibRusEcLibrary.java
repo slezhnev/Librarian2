@@ -223,6 +223,7 @@ public class LibRusEcLibrary implements LibraryRealization {
 					}				
 				}
 			}).collect(Collectors.toList());
+			el.library = library;
 			return el;
 		}));
 		fe.persist();

@@ -3,6 +3,7 @@ package ru.lsv.librarian2.rest;
 import io.vertx.core.Vertx;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpHeaders;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.MediaType;
@@ -29,6 +30,7 @@ import io.vertx.core.file.OpenOptions;
 
 @Authenticated
 @SuppressWarnings("rawtypes")
+@ApplicationScoped
 public class DownloadService extends Controller {
 
     private final Logger LOG = Logger.getLogger(DownloadService.class);
@@ -38,6 +40,12 @@ public class DownloadService extends Controller {
 
     @Inject
     JsonWebToken principal;
+
+    @Inject
+    DownloadPreparationService preparationService;
+
+    @Inject
+    DownloadUtils downloadUtils;
 
     @Path("/download/todownload")
     public List<Integer> getPreparedToDownload() {
@@ -68,7 +76,7 @@ public class DownloadService extends Controller {
         if (checkResult.getRight() != null) {
             return checkResult.getRight();
         }
-        Pair<File, File> downloadFiles = DownloadUtils.getBookFiles(checkResult.getLeft(), downloadType);
+        Pair<File, File> downloadFiles = downloadUtils.getBookFiles(checkResult.getLeft(), downloadType);
         if (downloadFiles == null) {
             return ResponseBuilder.create(400, "Cannot create temp storage").build();
         } else if (downloadFiles.getLeft().exists() && !downloadFiles.getRight().exists()) {
@@ -77,7 +85,7 @@ public class DownloadService extends Controller {
             return ResponseBuilder.ok(2).build();
         } else {
             LOG.infof("[bookId: %d] Download service got a request for download", checkResult.getLeft().bookId);
-            DownloadPreparationService.getInstance().prepareForDownload(checkResult.getLeft(), downloadType);
+            preparationService.prepareForDownload(checkResult.getLeft(), downloadType);
             return ResponseBuilder.ok(0).build();
         }
     }
@@ -88,7 +96,7 @@ public class DownloadService extends Controller {
         if (checkResult.getRight() != null) {
             return checkResult.getRight();
         }
-        Pair<File, File> bookFiles = DownloadUtils.getBookFiles(checkResult.getLeft(), downloadType);
+        Pair<File, File> bookFiles = downloadUtils.getBookFiles(checkResult.getLeft(), downloadType);
         if (bookFiles.getLeft().exists() && bookFiles.getRight().exists()) {
             return sendFileToDownload(downloadType, checkResult.getLeft(), principal.getName(),
                     bookFiles.getLeft());
@@ -105,7 +113,7 @@ public class DownloadService extends Controller {
         }
         File tempOutputFile;
         try {
-            tempOutputFile = DownloadUtils.prepareForDownload(checkResult.getLeft(), downloadType);
+            tempOutputFile = downloadUtils.prepareForDownload(checkResult.getLeft(), downloadType);
         } catch (DownloadPreparationException e) {
             return ResponseBuilder.create(400, e.getMessage()).build();
         }
@@ -119,6 +127,10 @@ public class DownloadService extends Controller {
         if (book == null) {
             LOG.errorf("[bookId: %d] Cannot find specified book", bookId);
             return Pair.of(null, ResponseBuilder.create(400, "Cannot find specified book").build());
+        }
+        if (book.library == null) {
+            LOG.errorf("[bookId: %d] Book does not have library", bookId);
+            return Pair.of(null, ResponseBuilder.create(400, "Book does not have library").build());
         }
         if (downloadType != 1 && downloadType != 2) {
             LOG.errorf("[bookId: %d] Bad downloadType was provided: %d", bookId, downloadType);
@@ -138,8 +150,6 @@ public class DownloadService extends Controller {
                     .ok(fileSystem.openBlocking(fileToDownload.getAbsolutePath(), new OpenOptions()),
                             MediaType.APPLICATION_OCTET_STREAM)
                     .encoding(StandardCharsets.UTF_8.toString())
-                    // .header(HttpHeaders.CONTENT_DISPOSITION.toString(),
-                    // "attachment; filename=\"" + fileToDownload.getName() + "\"")
                     .header("filename",
                             fileToDownload.getName())
                     .build();

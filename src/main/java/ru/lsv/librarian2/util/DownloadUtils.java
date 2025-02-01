@@ -14,25 +14,35 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jboss.logging.Logger;
 
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import ru.homyakin.iuliia.Schemas;
 import ru.homyakin.iuliia.Translator;
 import ru.lsv.librarian2.models.Book;
 import ru.lsv.librarian2.rest.DownloadService;
 import ru.lsv.librarian2.util.CommonUtils.StoragePathOverrideException;
 
+@Singleton
 public class DownloadUtils {
 
-    private static final Logger LOG = Logger.getLogger(DownloadService.class);
+    private final Logger LOG = Logger.getLogger(DownloadService.class);
 
-    private static final Translator translator = new Translator(Schemas.YANDEX_MAPS);
+    private final Translator translator = new Translator(Schemas.YANDEX_MAPS);
 
-    private static final String dirName = "librarian2";
+    private final String dirName = "librarian2";
 
-    static {
+    @Inject
+    private Tracer tracer;
+
+    @PostConstruct
+    void init() {
         new File(System.getProperty("java.io.tmpdir"), dirName).mkdirs();
     }
 
-    public static File getTempStorage() {
+    public File getTempStorage() {
         File tmpDir = new File(System.getProperty("java.io.tmpdir"), dirName);
         tmpDir.deleteOnExit();
         return tmpDir;
@@ -54,7 +64,7 @@ public class DownloadUtils {
         }
     }
 
-    public static Pair<File, File> getBookFiles(Book book, int downloadType) {
+    public Pair<File, File> getBookFiles(Book book, int downloadType) {
         File tmpDir = getTempStorage();
         if (tmpDir.exists()) {
             String name = translator.translate(cleanFileName(book.titleWithSerieAndAuthor()));
@@ -113,7 +123,7 @@ public class DownloadUtils {
      *                                      "extracted" file</li>
      *                                      </ul>
      */
-    public static File prepareForDownload(Book book, int downloadType) throws DownloadPreparationException {
+    public File prepareForDownload(Book book, int downloadType) throws DownloadPreparationException {
         if (book == null || book.library == null) {
             LOG.errorf("[bookId: %d] Book are null or does not have a link to library", book.bookId);
             throw new DownloadPreparationException("Book does not have a link to library");
@@ -160,6 +170,7 @@ public class DownloadUtils {
                 book.bookId,
                 tempOutputFile.getAbsolutePath(), bookNameInsideArchive);
         boolean found = false;
+        Span span = tracer.spanBuilder("bookSearchingInArchive").startSpan();
         try (OutputStream mainOut = new FileOutputStream(tempOutputFile)) {
             OutputStream out;
             switch (downloadType) {
@@ -177,11 +188,15 @@ public class DownloadUtils {
                         zipArchiveOutputStream
                                 .putArchiveEntry(new ZipArchiveEntry(book.id + ".fb2"));
                     }
+                    span.end();
+                    span = tracer.spanBuilder("bookCopying").startSpan();
                     IOUtils.copy(zip.getInputStream(entry), out);
                     if (out instanceof ZipArchiveOutputStream zipArchiveOutputStream) {
                         zipArchiveOutputStream.closeArchiveEntry();
                         zipArchiveOutputStream.finish();
                     }
+                    span.end();
+                    span = null;
                     LOG.infof("[bookId: %d] File copied", book.bookId);
                 }
             }
@@ -192,6 +207,10 @@ public class DownloadUtils {
                     book.bookId,
                     arcFile.getAbsolutePath());
             throw new DownloadPreparationException("Exception while forming file to download");
+        } finally {
+            if (span != null) {
+                span.end();
+            }
         }
         if (found) {
             try {
@@ -240,7 +259,7 @@ public class DownloadUtils {
      * @param badFileName Filename to process
      * @return Valid filename
      */
-    public static String cleanFileName(String badFileName) {
+    public String cleanFileName(String badFileName) {
         StringBuilder cleanName = new StringBuilder();
         for (int i = 0; i < badFileName.length(); i++) {
             int c = (int) badFileName.charAt(i);

@@ -59,11 +59,11 @@ export class AppComponent {
     this.keycloak.logout();
   }
 
-  searchType: string = "Books";
+  searchType: string = "Series";
 
-  searchText: string = "Боги"
+  searchText: string = ""
 
-  searchTypeParam: string = "All";
+  searchTypeParam: string = "NewBooks";
 
   searchForm: FormGroup = new FormGroup({
     searchEdit: new FormControl()
