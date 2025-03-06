@@ -12,10 +12,6 @@ export class DownloadService {
 
 	readonly fileSaver: FileSaverService = inject(FileSaverService)
 
-	downloadBook(bookId: number, downloadType: number) {
-		window.open("/download/book/" + bookId + "/" + downloadType + "/", "_blank");
-	}
-
 	getBooksToDownload(): Observable<number[]> {
 		return this.http.get<number[]>("/download/todownload/");
 	}
@@ -24,9 +20,9 @@ export class DownloadService {
 		return this.http.get<number>("/download/preparetodownload/" + bookId + "/" + downloadType + "/")
 	}
 
-	downloadPreparedBook(bookId: number, downloadType: number) {
+	innderDownloadBook(bookId: number, downloadType: number, urlPart: string) {
 		console.info("Trying to use FileSaverModule to save the file")
-		this.http.get("/download/preparedbook/" + bookId + "/" + downloadType + "/", {
+		this.http.get("/download/" + urlPart + "/" + bookId + "/" + downloadType + "/", {
 			observe: 'response',
           	responseType: 'blob',
 		  }).subscribe((res) => {
@@ -37,6 +33,14 @@ export class DownloadService {
 				console.info("Cannot find header 'filename' in response")
 			}
 		  });
+	}
+
+	downloadBook(bookId: number, downloadType: number) {
+		this.innderDownloadBook(bookId, downloadType, "book");
+	}
+
+	downloadPreparedBook(bookId: number, downloadType: number) {
+		this.innderDownloadBook(bookId, downloadType, "preparedbook");
 	}
 
 }
