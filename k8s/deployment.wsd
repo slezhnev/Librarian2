@@ -1,0 +1,35 @@
+@startuml Deployment_scheme
+package "Build&Deploy machine" {
+    action build
+    action deploy
+}
+
+package microk8s {
+    node keycloak_ns {
+        [KeyCloak]
+    }
+    node monitoring_ns {
+        [Grafana-OTel-LGTM]
+    }
+    node librarian_ns {
+        [Librarian2]
+    }
+}
+database PostgreSQL [
+    <b>libararian2
+]
+package SonatypeNexus {
+    artifact Docker
+}
+actor User
+
+
+Librarian2 --> PostgreSQL
+Librarian2 --> KeyCloak
+Docker --> microk8s
+build --> Docker
+deploy --> microk8s : helm
+Librarian2 --> "Grafana-OTel-LGTM"
+Librarian2 <--> User : via browser
+"Grafana-OTel-LGTM" --> User : logging + metrics + tracing
+@enduml

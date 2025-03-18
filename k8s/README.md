@@ -1,3 +1,7 @@
+# Deployment scheme
+![Deployment scheme](deployment/Deployment_scheme.png)
+
+# Deployment / installation / configure instructions
 1. We'll assume that we have microk8s (based on Docker) on Linux
 2. Enable the following addons:
 ```
