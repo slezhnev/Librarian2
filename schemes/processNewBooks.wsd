@@ -1,0 +1,52 @@
+@startuml New_books_processing
+actor User
+participant ProcessingStatus
+participant LibrarySheduler
+participant LibRusEcLibrary
+participant FB2BookParser
+participant INPXParser
+participant Torrent_data_on_fs
+database librarian
+
+== Get books processing status ==
+activate User
+activate ProcessingStatus
+activate LibrarySheduler
+User -> ProcessingStatus: via browser
+ProcessingStatus -> LibrarySheduler: request status
+LibrarySheduler -> ProcessingStatus: return status
+ProcessingStatus -> User: library analysis status
+deactivate LibrarySheduler
+deactivate ProcessingStatus
+deactivate User
+
+LibrarySheduler -[hidden]-> LibrarySheduler
+== Process new books ==
+activate LibrarySheduler
+activate LibRusEcLibrary
+LibrarySheduler -> LibrarySheduler: via timer or request from ProcessingStatus
+LibrarySheduler -> LibRusEcLibrary
+LibRusEcLibrary -> librarian : get all books from DB
+LibRusEcLibrary -> Torrent_data_on_fs : check that we have books, which is not mentioned in DB
+alt New books found
+    group loop over new books
+        activate FB2BookParser
+        LibRusEcLibrary -> FB2BookParser
+        FB2BookParser -> Torrent_data_on_fs: load and parse book from ZIP / FB2
+        activate INPXParser
+        FB2BookParser -> INPXParser : trying to get information about book from INPX specitication
+        INPXParser -> Torrent_data_on_fs: read book description from library INPX specitication
+        INPXParser -> FB2BookParser: information about book
+        FB2BookParser -> LibRusEcLibrary: information about book
+        deactivate INPXParser
+        deactivate FB2BookParser
+        LibRusEcLibrary -> librarian: store information about authors and book into DB
+    end
+else No new books
+    LibRusEcLibrary -x LibrarySheduler
+end
+
+deactivate LibRusEcLibrary
+deactivate LibrarySheduler
+
+@enduml
